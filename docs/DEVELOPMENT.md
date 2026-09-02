@@ -1,6 +1,6 @@
 # 开发说明
 
-开始开发前请先阅读 [`GIT_WORKFLOW.md`](GIT_WORKFLOW.md)。日常功能从 `develop` 创建临时分支，生产版本只通过 `release/*` 或 `hotfix/*` 进入 `master`。
+开始开发前请先阅读 [`GIT_WORKFLOW.md`](GIT_WORKFLOW.md) 和 [`CODE_STYLE.md`](CODE_STYLE.md)。日常功能从 `develop` 创建临时分支，生产版本只通过 `release/*` 或 `hotfix/*` 进入 `master`。
 
 ## 快速开始
 
@@ -10,10 +10,23 @@ npm run check
 
 无需安装 npm 依赖。打开 `chrome://extensions/`，启用开发者模式并加载仓库根目录，即可调试扩展。
 
+## 代码与注释要点
+
+- 项目自有注释使用简体中文，标准 API、类型和标识符保持英文。
+- JavaScript 使用 JSDoc，HTML 使用 `<!-- -->`，CSS 使用 `/* */`，Shell 使用 `#`。
+- JSON 不支持注释；配置原因写入对应文档。
+- 注释重点解释设计原因、安全边界、兼容处理和非显然约束，不重复描述代码表面行为。
+- 公共入口、复杂函数和具有副作用的工程操作必须有必要说明。
+- 第三方代码必须保留许可证要求的版权与来源信息。
+
+完整示例和评审清单见 `CODE_STYLE.md`。
+
+## 修改与调试
+
 修改代码后：
 
-- 修改 `content.js` 或 `manifest.json`：重新加载扩展，并刷新被测试网页。
-- 修改 `background.js`：重新加载扩展以重启 Service Worker。
+- 修改 `src/content/page-reader.js` 或 `manifest.json`：重新加载扩展，并刷新被测试网页。
+- 修改 `src/background/service-worker.js`：重新加载扩展以重启 Service Worker。
 - 修改 Side Panel 文件：重新加载扩展，必要时关闭并重新打开侧边栏。
 
 ## 调试入口

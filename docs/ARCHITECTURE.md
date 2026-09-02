@@ -12,11 +12,11 @@ Curio 是一个纯客户端 Chrome Manifest V3 扩展。当前版本没有自有
 
 ### Background Service Worker
 
-`background.js` 配置点击扩展工具栏图标时打开 Side Panel。它不读取网页、不保存对话，也不调用模型。
+`src/background/service-worker.js` 配置点击扩展工具栏图标时打开 Side Panel。它不读取网页、不保存对话，也不调用模型。
 
 ### Content Script
 
-`content.js` 在普通网页加载完成后注入。收到 `CURIO_READ_PAGE` 消息时，它会：
+`src/content/page-reader.js` 在普通网页加载完成后注入。收到 `CURIO_READ_PAGE` 消息时，它会：
 
 1. 优先选择 `main`、`article` 或 `[role="main"]`。
 2. 复制 DOM，移除脚本、样式、导航、表单及不可见元素。
@@ -27,7 +27,7 @@ Curio 是一个纯客户端 Chrome Manifest V3 扩展。当前版本没有自有
 
 ### Side Panel
 
-`sidepanel.js` 是当前应用控制器，负责：
+`src/sidepanel/index.js` 是当前应用控制器，负责：
 
 - 查询活动标签页并向内容脚本请求页面快照。
 - 在内存中按 `tabId` 保存对话历史。
@@ -41,7 +41,7 @@ Curio 是一个纯客户端 Chrome Manifest V3 扩展。当前版本没有自有
 当前网页
   │ CURIO_READ_PAGE
   ▼
-content.js ──页面快照──▶ sidepanel.js
+page-reader.js ──页面快照──▶ sidepanel/index.js
                             │
                             ├──▶ UI（标题、状态、对话）
                             │
@@ -64,4 +64,3 @@ content.js ──页面快照──▶ sidepanel.js
 - 纯客户端 API Key 不适合面向公众发布。
 - 当前正文提取是通用启发式实现，不等同于完整 Readability 算法。
 - 会话没有跨浏览器重启持久化，也没有流式输出。
-
