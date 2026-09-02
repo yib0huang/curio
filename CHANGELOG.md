@@ -11,6 +11,8 @@
 - Pull Request 模板和 GitHub Actions 工程校验。
 - 按 Chrome 运行上下文组织的 `src/` 工程结构。
 - 中文源码注释规范和必要的 JSDoc、HTML、CSS、Shell 注释。
+- React 19、TypeScript 7、Vite 8 与 CRXJS 构建体系。
+- 按组件、Hook、服务和共享类型拆分的 Side Panel 架构。
 
 ## [0.1.0] - 2026-09-02
 

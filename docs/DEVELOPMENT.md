@@ -5,15 +5,25 @@
 ## 快速开始
 
 ```bash
+npm install
 npm run check
+npm run build
 ```
 
-无需安装 npm 依赖。打开 `chrome://extensions/`，启用开发者模式并加载仓库根目录，即可调试扩展。
+开发源码使用 React + TypeScript。打开 `chrome://extensions/`，启用开发者模式并加载构建生成的 `dist/` 目录。
+
+常用命令：
+
+- `npm run dev`：启动监听构建；源码变化后在扩展页重新加载。
+- `npm run typecheck`：执行严格 TypeScript 类型检查。
+- `npm run check`：执行类型、Manifest、资源和版本检查。
+- `npm run build`：生成 `dist/` 可加载扩展。
+- `npm run package`：生成 `release/curio-<version>.zip`。
 
 ## 代码与注释要点
 
 - 项目自有注释使用简体中文，标准 API、类型和标识符保持英文。
-- JavaScript 使用 JSDoc，HTML 使用 `<!-- -->`，CSS 使用 `/* */`，Shell 使用 `#`。
+- TypeScript/TSX 使用 TSDoc/JSDoc 风格，HTML 使用 `<!-- -->`，CSS 使用 `/* */`，Shell 使用 `#`。
 - JSON 不支持注释；配置原因写入对应文档。
 - 注释重点解释设计原因、安全边界、兼容处理和非显然约束，不重复描述代码表面行为。
 - 公共入口、复杂函数和具有副作用的工程操作必须有必要说明。
@@ -25,8 +35,8 @@ npm run check
 
 修改代码后：
 
-- 修改 `src/content/page-reader.js` 或 `manifest.json`：重新加载扩展，并刷新被测试网页。
-- 修改 `src/background/service-worker.js`：重新加载扩展以重启 Service Worker。
+- 修改 `src/content/page-reader.ts` 或 `manifest.json`：重新构建、重新加载扩展，并刷新被测试网页。
+- 修改 `src/background/service-worker.ts`：重新构建并重新加载扩展以重启 Service Worker。
 - 修改 Side Panel 文件：重新加载扩展，必要时关闭并重新打开侧边栏。
 
 ## 调试入口
@@ -43,7 +53,7 @@ npm run check
 4. 运行 `npm run check`。
 5. 完成 `AGENTS.md` 中的手动验证清单。
 6. 运行 `npm run package`。
-7. 检查 `dist/curio-<version>.zip` 中没有密钥、日志、草稿或无关文件。
+7. 检查 `release/curio-<version>.zip` 中没有密钥、日志、草稿或无关文件。
 8. 按 `GIT_WORKFLOW.md` 合并到 `master`、创建版本标签并回合并到 `develop`。
 
 ## 增加依赖

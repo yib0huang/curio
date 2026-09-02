@@ -5,9 +5,7 @@
 
 import { access, readFile } from "node:fs/promises";
 import { constants } from "node:fs";
-import { spawnSync } from "node:child_process";
 import path from "node:path";
-import process from "node:process";
 
 const root = path.resolve(import.meta.dirname, "..");
 const manifestPath = path.join(root, "manifest.json");
@@ -50,20 +48,13 @@ for (const file of referencedFiles) {
   await access(path.join(root, file), constants.R_OK);
 }
 
-const scripts = [
+const sourceEntries = [
   manifest.background?.service_worker,
   ...(manifest.content_scripts || []).flatMap((entry) => entry.js || []),
-  ...sidePanelResources.filter((resource) => resource.endsWith(".js"))
+  ...sidePanelResources.filter((resource) => /\.[cm]?[jt]sx?$/.test(resource))
 ].filter(Boolean);
 
-for (const script of scripts) {
-  const result = spawnSync(process.execPath, ["--check", path.join(root, script)], {
-    encoding: "utf8"
-  });
-  if (result.status !== 0) {
-    process.stderr.write(result.stderr);
-    process.exit(result.status || 1);
-  }
-}
-
-console.log(`Curio 工程校验通过：${referencedFiles.size} 个资源文件，${scripts.length} 个脚本。`);
+// TypeScript 语法和类型由 npm run typecheck 负责，这里只统计并验证入口文件存在。
+console.log(
+  `Curio 工程校验通过：${referencedFiles.size} 个资源文件，${sourceEntries.length} 个源码入口。`
+);

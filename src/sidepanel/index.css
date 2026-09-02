@@ -27,7 +27,9 @@ button { cursor: pointer; }
   min-width: 300px;
 }
 
+/* React 会按状态增删区域，显式行号可确保输入区始终固定在底部。 */
 .topbar {
+  grid-row: 1;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -48,6 +50,7 @@ button { cursor: pointer; }
 
 /* 当前页面摘要 */
 .page-card {
+  grid-row: 2;
   margin: 12px 14px 0;
   padding: 11px 13px;
   border: 1px solid #e4e2dc;
@@ -61,7 +64,7 @@ button { cursor: pointer; }
 .page-card small { margin-top: 2px; color: #85837c; }
 
 /* 首次使用引导 */
-.empty-state { align-self: center; padding: 30px 22px; text-align: center; }
+.empty-state { grid-row: 3; align-self: center; padding: 30px 22px; text-align: center; }
 .orb { width: 48px; height: 48px; display: grid; place-items: center; margin: auto; border-radius: 50%; background: #ece9ff; color: #6b4ff5; font-size: 22px; }
 .empty-state h2 { font-size: 18px; margin: 16px 0 7px; }
 .empty-state p { margin: 0 auto; max-width: 290px; color: #77756f; font-size: 13px; line-height: 1.5; }
@@ -70,7 +73,7 @@ button { cursor: pointer; }
 .suggestions button:hover { border-color: #b9afea; background: #faf9ff; }
 
 /* 多轮对话记录 */
-.messages { display: none; overflow-y: auto; padding: 18px 14px 8px; }
+.messages { grid-row: 3; display: none; overflow-y: auto; padding: 18px 14px 8px; }
 .messages.active { display: flex; flex-direction: column; gap: 14px; }
 .message { max-width: 90%; font-size: 13.5px; line-height: 1.58; white-space: pre-wrap; overflow-wrap: anywhere; }
 .message.user { align-self: flex-end; padding: 9px 12px; border-radius: 14px 14px 4px 14px; background: #6554d9; color: white; }
@@ -78,10 +81,10 @@ button { cursor: pointer; }
 .message.assistant.pending { color: #88857f; }
 
 /* 问题输入区和错误反馈 */
-.composer-wrap { padding: 8px 14px 13px; background: linear-gradient(transparent, #f7f7f5 16%); }
+.composer-wrap { grid-row: 4; padding: 8px 14px 13px; background: linear-gradient(transparent, #f7f7f5 16%); }
 .composer { display: flex; align-items: flex-end; gap: 8px; padding: 7px; border: 1px solid #dcdad3; border-radius: 14px; background: white; box-shadow: 0 5px 20px rgba(30, 28, 20, .06); }
 .composer:focus-within { border-color: #8d7df0; box-shadow: 0 0 0 3px rgba(113, 91, 224, .1); }
-.composer textarea { flex: 1; resize: none; max-height: 130px; border: 0; outline: 0; padding: 7px; background: transparent; line-height: 1.4; }
+.composer textarea { flex: 1; resize: none; min-height: 34px; max-height: 130px; field-sizing: content; overflow-y: auto; border: 0; outline: 0; padding: 7px; background: transparent; line-height: 1.4; }
 .composer button { width: 34px; height: 34px; border: 0; border-radius: 10px; background: #6554d9; color: white; font-size: 20px; }
 .composer button:disabled { cursor: not-allowed; opacity: .45; }
 .composer-wrap > small { display: block; margin-top: 7px; color: #98958e; text-align: center; font-size: 10px; }

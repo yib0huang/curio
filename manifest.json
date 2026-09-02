@@ -12,7 +12,8 @@
   "permissions": ["activeTab", "sidePanel", "storage", "tabs"],
   "host_permissions": ["<all_urls>"],
   "background": {
-    "service_worker": "src/background/service-worker.js"
+    "service_worker": "src/background/service-worker.ts",
+    "type": "module"
   },
   "action": {
     "default_title": "打开 Curio",
@@ -27,7 +28,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["src/content/page-reader.js"],
+      "js": ["src/content/page-reader.ts"],
       "run_at": "document_idle"
     }
   ]

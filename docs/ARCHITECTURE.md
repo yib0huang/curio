@@ -2,7 +2,7 @@
 
 ## 系统边界
 
-Curio 是一个纯客户端 Chrome Manifest V3 扩展。当前版本没有自有后端，模型请求从扩展侧边栏直接发送到用户配置的 Responses API 地址。
+Curio 是一个使用 React、TypeScript、Vite 和 CRXJS 构建的纯客户端 Chrome Manifest V3 扩展。当前版本没有自有后端，模型请求从扩展侧边栏直接发送到用户配置的 Responses API 地址。Chrome 加载的是 `dist/` 内构建后的标准 Web 资源。
 
 ## 组件
 
@@ -12,11 +12,11 @@ Curio 是一个纯客户端 Chrome Manifest V3 扩展。当前版本没有自有
 
 ### Background Service Worker
 
-`src/background/service-worker.js` 配置点击扩展工具栏图标时打开 Side Panel。它不读取网页、不保存对话，也不调用模型。
+`src/background/service-worker.ts` 配置点击扩展工具栏图标时打开 Side Panel。它不读取网页、不保存对话，也不调用模型。
 
 ### Content Script
 
-`src/content/page-reader.js` 在普通网页加载完成后注入。收到 `CURIO_READ_PAGE` 消息时，它会：
+`src/content/page-reader.ts` 在普通网页加载完成后注入。收到 `CURIO_READ_PAGE` 消息时，它会：
 
 1. 优先选择 `main`、`article` 或 `[role="main"]`。
 2. 复制 DOM，移除脚本、样式、导航、表单及不可见元素。
@@ -27,13 +27,15 @@ Curio 是一个纯客户端 Chrome Manifest V3 扩展。当前版本没有自有
 
 ### Side Panel
 
-`src/sidepanel/index.js` 是当前应用控制器，负责：
+Side Panel 使用分层的 React + TypeScript 结构：
 
-- 查询活动标签页并向内容脚本请求页面快照。
-- 在内存中按 `tabId` 保存对话历史。
-- 从 `chrome.storage.local` 读取模型配置。
-- 拼装不可信网页上下文和最近 6 轮对话。
-- 调用模型 API 并以纯文本渲染结果。
+- `components/`：展示页面、消息、输入框和设置对话框。
+- `hooks/useCurioController.ts`：组合 UI 状态和业务流程，不实现具体协议。
+- `services/ChromePageService.ts`：活动标签页和内容脚本通信。
+- `services/ConversationStore.ts`：按 `tabId` 隔离内存会话。
+- `services/SettingsRepository.ts`：封装 `chrome.storage.local`。
+- `services/ResponsesClient.ts`：封装不可信网页上下文和 Responses API 协议。
+- `shared/types.ts`：Content Script 与 Side Panel 共享的消息及领域类型。
 
 ## 数据流
 
@@ -41,15 +43,16 @@ Curio 是一个纯客户端 Chrome Manifest V3 扩展。当前版本没有自有
 当前网页
   │ CURIO_READ_PAGE
   ▼
-page-reader.js ──页面快照──▶ sidepanel/index.js
-                            │
-                            ├──▶ UI（标题、状态、对话）
-                            │
-                            ├──▶ chrome.storage.local（API 配置）
-                            │
-                            └──问题 + 页面快照──▶ 模型 API
-                                                   │
-                                                   └──回答──▶ UI
+page-reader.ts ──页面快照──▶ ChromePageService
+                                  │
+                                  ▼
+                         useCurioController
+                          │       │       │
+                          │       │       └──▶ React Components
+                          │       └──▶ SettingsRepository
+                          └──▶ ConversationStore
+                                  │
+                                  └──问题 + 上下文──▶ ResponsesClient ──▶ 模型 API
 ```
 
 ## 状态生命周期

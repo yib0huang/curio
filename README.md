@@ -25,21 +25,27 @@ Curio 是一个 Chrome Side Panel 扩展：读取当前标签页的正文，并�
 ## 工程命令
 
 ```bash
+npm install
+npm run dev
 npm run check
+npm run build
 npm run package
 ```
 
-- `npm run check`：校验 Manifest 引用的资源和 JavaScript 语法。
-- `npm run package`：校验通过后生成可发布的 `dist/curio-<version>.zip`。
+- `npm run dev`：启动 Vite/CRXJS 开发构建和文件监听。
+- `npm run check`：执行 TypeScript 类型检查以及 Manifest、资源和版本校验。
+- `npm run build`：生成可由 Chrome 加载的 `dist/` 目录。
+- `npm run package`：构建后生成 `release/curio-<version>.zip` 发布包。
 
 ## 本地安装
 
-1. 打开 `chrome://extensions/`。
-2. 开启右上角的「开发者模式」。
-3. 点击「加载已解压的扩展程序」，选择本目录。
-4. 打开一个普通网页并刷新一次。
-5. 点击浏览器工具栏中的 Curio 图标，侧边栏会在网页右侧打开。
-6. 点击侧边栏右上角的设置按钮，填写 API Key、模型和 API 地址。
+1. 执行 `npm install` 和 `npm run build`。
+2. 打开 `chrome://extensions/`。
+3. 开启右上角的「开发者模式」。
+4. 点击「加载已解压的扩展程序」，选择本项目的 `dist/` 目录。
+5. 打开一个普通网页并刷新一次。
+6. 点击浏览器工具栏中的 Curio 图标，侧边栏会在网页右侧打开。
+7. 点击侧边栏右上角的设置按钮，填写 API Key、模型和 API 地址。
 
 默认 API 地址为 OpenAI Responses API：`https://api.openai.com/v1/responses`，默认模型为 `gpt-5.6-sol`。请求会设置 `store: false`，扩展每次最多携带最近 6 轮对话。
 
@@ -58,25 +64,33 @@ npm run package
 
 ```text
 curio/
-├── manifest.json                 # Chrome Manifest V3 入口
+├── manifest.json                 # Chrome Manifest V3 源清单
 ├── src/
 │   ├── background/
-│   │   └── service-worker.js     # Side Panel 后台行为
+│   │   └── service-worker.ts     # Side Panel 后台行为
 │   ├── content/
-│   │   └── page-reader.js        # 当前网页正文提取
+│   │   └── page-reader.ts        # 当前网页正文提取
+│   ├── shared/
+│   │   └── types.ts              # 跨运行上下文领域类型
 │   └── sidepanel/
+│       ├── components/           # React 展示组件
+│       ├── hooks/                # React 状态协调层
+│       ├── services/             # Chrome、会话、设置和模型服务
+│       ├── App.tsx               # 页面组件组合
+│       ├── main.tsx              # React 入口
 │       ├── index.html            # 侧边栏页面
-│       ├── index.css             # 侧边栏样式
-│       └── index.js              # 会话状态与模型请求
+│       └── index.css             # 侧边栏样式
 ├── assets/                       # Logo 和 Chrome 多尺寸图标
 ├── scripts/                      # 校验与发布打包脚本
 ├── docs/                         # 架构、规范和隐私文档
 ├── .github/                      # CI 与 Pull Request 模板
+├── vite.config.ts                # Vite 与 CRXJS 构建配置
+├── tsconfig.json                 # TypeScript 严格模式配置
 ├── AGENTS.md                     # AI 代理协作约定
 └── README.md                     # 项目入口
 ```
 
-该结构遵循 Manifest 位于扩展根目录、源代码按 Chrome 运行上下文拆分、工程文件与运行资源分离的组织原则。
+源码使用 React + TypeScript，并按 Chrome 运行上下文和业务职责拆分。Chrome 实际加载的是 Vite/CRXJS 输出到 `dist/` 的标准 Manifest、HTML、CSS 和 JavaScript。
 
 ## 项目状态
 

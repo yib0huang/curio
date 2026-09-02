@@ -5,11 +5,11 @@
 ## 开发环境
 
 - Google Chrome，支持 Manifest V3 Side Panel API
-- Node.js 20 或更高版本
+- Node.js 20.19 或更高版本，推荐使用当前项目 CI 的 Node.js 22
 - npm 10 或更高版本
 - macOS 或提供 POSIX Shell 与 `zip` 的兼容环境
 
-本项目目前没有第三方 npm 依赖，不需要执行 `npm install`。
+首次开发先执行 `npm install`。CI 和可复现环境使用 `npm ci` 按 `package-lock.json` 安装锁定版本。
 
 ## 开发流程
 

@@ -1,3 +1,5 @@
+import type { PageSnapshot, ReadPageMessage, ReadPageResponse } from "../shared/types";
+
 /**
  * @file 当前网页内容提取脚本。
  * 该脚本运行在页面上下文中，仅在收到侧边栏消息后返回整理后的页面快照。
@@ -9,12 +11,11 @@ const MAX_PAGE_CHARS = 50000;
 /**
  * 从当前文档中提取适合模型阅读的页面快照。
  *
- * @returns {{title: string, url: string, description: string, text: string, capturedAt: string}}
- * 页面标题、地址、摘要、清理后的正文和采集时间。
+ * @returns 页面标题、地址、摘要、清理后的正文和采集时间。
  */
-function extractPage() {
+function extractPage(): PageSnapshot {
   const root = document.querySelector("main, article, [role='main']") || document.body;
-  const copy = root.cloneNode(true);
+  const copy = root.cloneNode(true) as HTMLElement;
 
   // 在副本上删除噪声和交互元素，绝不修改用户正在浏览的真实页面。
   copy
@@ -31,8 +32,8 @@ function extractPage() {
     .slice(0, MAX_PAGE_CHARS);
 
   const description =
-    document.querySelector('meta[name="description"]')?.content ||
-    document.querySelector('meta[property="og:description"]')?.content ||
+    document.querySelector<HTMLMetaElement>('meta[name="description"]')?.content ||
+    document.querySelector<HTMLMetaElement>('meta[property="og:description"]')?.content ||
     "";
 
   return {
@@ -44,13 +45,18 @@ function extractPage() {
   };
 }
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message?.type !== "CURIO_READ_PAGE") return;
+chrome.runtime.onMessage.addListener(
+  (message: ReadPageMessage, _sender, sendResponse: (response: ReadPageResponse) => void) => {
+    if (message?.type !== "CURIO_READ_PAGE") return;
 
-  // 捕获提取异常并序列化错误，避免消息通道因未处理异常而静默断开。
-  try {
-    sendResponse({ ok: true, page: extractPage() });
-  } catch (error) {
-    sendResponse({ ok: false, error: error instanceof Error ? error.message : String(error) });
+    // 捕获提取异常并序列化错误，避免消息通道因未处理异常而静默断开。
+    try {
+      sendResponse({ ok: true, page: extractPage() });
+    } catch (error) {
+      sendResponse({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
   }
-});
+);

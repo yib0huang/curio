@@ -7,80 +7,8 @@
     <link rel="stylesheet" href="index.css" />
   </head>
   <body>
-    <!-- 侧边栏主体：页面信息、对话记录和输入区共享同一布局容器。 -->
-    <main class="app">
-      <!-- 顶部区域展示品牌、页面读取状态及全局操作。 -->
-      <header class="topbar">
-        <div class="brand">
-          <img class="brand-mark" src="../../assets/icons-v3/icon-48.png" alt="Curio" />
-          <div>
-            <h1>Curio</h1>
-            <p id="page-status">正在读取当前网页…</p>
-          </div>
-        </div>
-        <div class="actions">
-          <button id="refresh-page" class="icon-button" title="重新读取网页" aria-label="重新读取网页">↻</button>
-          <button id="open-settings" class="icon-button" title="设置" aria-label="设置">⚙</button>
-        </div>
-      </header>
-
-      <!-- 页面摘要仅在成功读取当前网页后显示。 -->
-      <section id="page-card" class="page-card" hidden>
-        <span>当前页面</span>
-        <strong id="page-title"></strong>
-        <small id="page-url"></small>
-      </section>
-
-      <!-- 无对话时提供高频问题入口，降低首次使用成本。 -->
-      <section id="empty-state" class="empty-state">
-        <div class="orb">✦</div>
-        <h2>关于这个页面，你想知道什么？</h2>
-        <p>我会结合当前网页内容回答，并记住本次对话。</p>
-        <div class="suggestions">
-          <button data-question="总结这个页面的核心内容">总结核心内容</button>
-          <button data-question="提取这个页面最重要的信息，并用要点列出">提取重点</button>
-          <button data-question="这个页面有哪些值得进一步思考或核实的地方？">深入分析</button>
-        </div>
-      </section>
-
-      <!-- aria-live 使新增回答能够被辅助技术感知。 -->
-      <section id="messages" class="messages" aria-live="polite"></section>
-
-      <!-- 输入区固定在底部，错误提示与当前输入保持邻近。 -->
-      <footer class="composer-wrap">
-        <div id="error-banner" class="error-banner" hidden></div>
-        <form id="composer" class="composer">
-          <textarea id="question" rows="1" maxlength="4000" placeholder="询问当前页面…" aria-label="问题"></textarea>
-          <button id="send" type="submit" aria-label="发送">↑</button>
-        </form>
-        <small>AI 可能会出错，请核实重要信息</small>
-      </footer>
-    </main>
-
-    <!-- 模型设置使用原生对话框，避免额外的弹层依赖。 -->
-    <dialog id="settings-dialog">
-      <form id="settings-form" method="dialog">
-        <div class="dialog-title">
-          <h2>模型设置</h2>
-          <button type="button" id="close-settings" class="icon-button" aria-label="关闭">×</button>
-        </div>
-        <label>
-          API 地址
-          <input id="api-url" type="url" required />
-        </label>
-        <label>
-          API Key
-          <input id="api-key" type="password" autocomplete="off" placeholder="sk-…" />
-        </label>
-        <label>
-          模型
-          <input id="model" type="text" required />
-        </label>
-        <p class="privacy-note">设置仅保存在当前 Chrome 浏览器中。页面正文会在你发送问题时传给该 API。</p>
-        <button class="primary" type="submit">保存设置</button>
-      </form>
-    </dialog>
-
-    <script src="index.js"></script>
+    <!-- React 应用挂载点；页面结构由类型安全的组件负责渲染。 -->
+    <div id="root"></div>
+    <script type="module" src="./main.tsx"></script>
   </body>
 </html>
