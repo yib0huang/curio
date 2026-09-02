@@ -2,6 +2,24 @@
 
 Curio 是一个 Chrome Side Panel 扩展：读取当前标签页的正文，并基于这些内容进行多轮问答。
 
+## 功能特性
+
+- 在任意普通网页旁打开原生 Chrome 侧边栏。
+- 提取当前网页标题、URL、描述和主要正文。
+- 围绕网页上下文进行按标签页隔离的多轮对话。
+- 支持配置 Responses API 地址、API Key 和模型。
+- 对网页提示词注入、输出渲染和请求存储采取基础防护。
+
+## 文档
+
+- [AI 代理协作约定](AGENTS.md)
+- [贡献指南](CONTRIBUTING.md)
+- [架构说明](docs/ARCHITECTURE.md)
+- [开发与发布](docs/DEVELOPMENT.md)
+- [隐私与数据处理](docs/PRIVACY.md)
+- [安全策略](SECURITY.md)
+- [版本记录](CHANGELOG.md)
+
 ## 工程命令
 
 ```bash
@@ -43,3 +61,9 @@ npm run package
 - `assets/curio-logo-v3.png`：当前使用的放大版透明 Logo 原图。
 - `assets/icons-v3/`：Chrome 当前使用的 16、32、48、128px 图标。
 - `assets/curio-logo.png`、`assets/curio-logo-v2.png`：保留的早期版本。
+- `scripts/`：工程校验和发布打包脚本。
+- `docs/`：架构、开发及隐私文档。
+
+## 项目状态
+
+Curio 当前处于 `0.1.0` 本地 MVP 阶段，尚未建立稳定 API 或公开发布承诺。
