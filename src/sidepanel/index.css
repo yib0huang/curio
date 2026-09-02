@@ -62,6 +62,7 @@ dialog::backdrop { background: rgba(20, 18, 14, .35); }
 #settings-form label { display: grid; gap: 6px; color: #5c5a55; font-size: 13px; }
 #settings-form input { width: 100%; padding: 10px 11px; border: 1px solid #d8d6cf; border-radius: 9px; outline: 0; }
 #settings-form input:focus { border-color: #7c6be4; }
+.field-note { color: #807d76; font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; }
 .privacy-note { margin: 0; color: #807d76; font-size: 12px; line-height: 1.45; }
 .primary { border: 0; border-radius: 9px; padding: 10px; background: #6554d9; color: white; font-weight: 650; }
 
