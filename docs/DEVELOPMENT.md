@@ -5,20 +5,28 @@
 ## 快速开始
 
 ```bash
-npm install
-npm run check
-npm run build
+make install
+make check
+make build
 ```
 
 开发源码使用 React + TypeScript。打开 `chrome://extensions/`，启用开发者模式并加载构建生成的 `dist/` 目录。
 
 常用命令：
 
-- `npm run dev`：启动监听构建；源码变化后在扩展页重新加载。
-- `npm run typecheck`：执行严格 TypeScript 类型检查。
-- `npm run check`：执行类型、Manifest、资源和版本检查。
-- `npm run build`：生成 `dist/` 可加载扩展。
-- `npm run package`：生成 `release/curio-<version>.zip`。
+- `make help`：显示完整目标说明和可覆盖变量。
+- `make doctor`：检查本地构建和打包工具。
+- `make dev`：启动监听构建；源码变化后在扩展页重新加载。
+- `make typecheck`：执行严格 TypeScript 类型检查。
+- `make validate`：单独执行 Manifest、资源和版本检查。
+- `make check`：执行完整静态检查。
+- `make build`：完成检查并生成 `dist/` 可加载扩展。
+- `make rebuild`：清理 `dist/` 后重新构建。
+- `make package`：生成 `release/curio-<version>.zip`，校验完整性和根级 Manifest，并列出文件清单。
+- `make ci`：通过 `npm ci` 完成可复现安装，并运行检查、构建和打包。
+- `make clean`、`make clean-package`、`make clean-deps`：分别清理构建目录、发布目录和依赖目录。
+
+Makefile 是现有 npm 脚本的编排层；不使用 Make 时仍可直接运行 `npm run dev`、`npm run check`、`npm run build` 和 `npm run package`。Node.js、npm 与 unzip 路径可通过命令行变量覆盖，例如 `make build NPM=/opt/node/bin/npm`。输出目录保持为项目约定的 `dist/` 和 `release/`，避免清理命令误删意外路径。
 
 ## 代码与注释要点
 
