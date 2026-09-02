@@ -4,13 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Curio</title>
-    <link rel="stylesheet" href="sidepanel.css" />
+    <link rel="stylesheet" href="index.css" />
   </head>
   <body>
+    <!-- 侧边栏主体：页面信息、对话记录和输入区共享同一布局容器。 -->
     <main class="app">
+      <!-- 顶部区域展示品牌、页面读取状态及全局操作。 -->
       <header class="topbar">
         <div class="brand">
-          <img class="brand-mark" src="assets/icons-v3/icon-48.png" alt="Curio" />
+          <img class="brand-mark" src="../../assets/icons-v3/icon-48.png" alt="Curio" />
           <div>
             <h1>Curio</h1>
             <p id="page-status">正在读取当前网页…</p>
@@ -22,12 +24,14 @@
         </div>
       </header>
 
+      <!-- 页面摘要仅在成功读取当前网页后显示。 -->
       <section id="page-card" class="page-card" hidden>
         <span>当前页面</span>
         <strong id="page-title"></strong>
         <small id="page-url"></small>
       </section>
 
+      <!-- 无对话时提供高频问题入口，降低首次使用成本。 -->
       <section id="empty-state" class="empty-state">
         <div class="orb">✦</div>
         <h2>关于这个页面，你想知道什么？</h2>
@@ -39,8 +43,10 @@
         </div>
       </section>
 
+      <!-- aria-live 使新增回答能够被辅助技术感知。 -->
       <section id="messages" class="messages" aria-live="polite"></section>
 
+      <!-- 输入区固定在底部，错误提示与当前输入保持邻近。 -->
       <footer class="composer-wrap">
         <div id="error-banner" class="error-banner" hidden></div>
         <form id="composer" class="composer">
@@ -51,6 +57,7 @@
       </footer>
     </main>
 
+    <!-- 模型设置使用原生对话框，避免额外的弹层依赖。 -->
     <dialog id="settings-dialog">
       <form id="settings-form" method="dialog">
         <div class="dialog-title">
@@ -74,6 +81,6 @@
       </form>
     </dialog>
 
-    <script src="sidepanel.js"></script>
+    <script src="index.js"></script>
   </body>
 </html>

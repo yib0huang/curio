@@ -9,6 +9,8 @@
 - AI 代理协作约定与工程文档。
 - 基于 `master`、`develop` 和临时分支的 Git Flow 管理规范。
 - Pull Request 模板和 GitHub Actions 工程校验。
+- 按 Chrome 运行上下文组织的 `src/` 工程结构。
+- 中文源码注释规范和必要的 JSDoc、HTML、CSS、Shell 注释。
 
 ## [0.1.0] - 2026-09-02
 

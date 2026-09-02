@@ -16,6 +16,7 @@ Curio 是一个 Chrome Side Panel 扩展：读取当前标签页的正文，并�
 - [贡献指南](CONTRIBUTING.md)
 - [架构说明](docs/ARCHITECTURE.md)
 - [开发与发布](docs/DEVELOPMENT.md)
+- [代码与中文注释规范](docs/CODE_STYLE.md)
 - [Git 分支管理](docs/GIT_WORKFLOW.md)
 - [隐私与数据处理](docs/PRIVACY.md)
 - [安全策略](SECURITY.md)
@@ -55,15 +56,27 @@ npm run package
 
 ## 项目结构
 
-- `manifest.json`：Manifest V3 配置。
-- `background.js`：点击扩展图标时打开侧边栏。
-- `content.js`：提取当前页面的标题、URL、描述和正文。
-- `sidepanel.html/css/js`：对话界面、逐标签页会话状态与模型请求。
-- `assets/curio-logo-v3.png`：当前使用的放大版透明 Logo 原图。
-- `assets/icons-v3/`：Chrome 当前使用的 16、32、48、128px 图标。
-- `assets/curio-logo.png`、`assets/curio-logo-v2.png`：保留的早期版本。
-- `scripts/`：工程校验和发布打包脚本。
-- `docs/`：架构、开发及隐私文档。
+```text
+curio/
+├── manifest.json                 # Chrome Manifest V3 入口
+├── src/
+│   ├── background/
+│   │   └── service-worker.js     # Side Panel 后台行为
+│   ├── content/
+│   │   └── page-reader.js        # 当前网页正文提取
+│   └── sidepanel/
+│       ├── index.html            # 侧边栏页面
+│       ├── index.css             # 侧边栏样式
+│       └── index.js              # 会话状态与模型请求
+├── assets/                       # Logo 和 Chrome 多尺寸图标
+├── scripts/                      # 校验与发布打包脚本
+├── docs/                         # 架构、规范和隐私文档
+├── .github/                      # CI 与 Pull Request 模板
+├── AGENTS.md                     # AI 代理协作约定
+└── README.md                     # 项目入口
+```
+
+该结构遵循 Manifest 位于扩展根目录、源代码按 Chrome 运行上下文拆分、工程文件与运行资源分离的组织原则。
 
 ## 项目状态
 

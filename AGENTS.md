@@ -18,9 +18,9 @@ Curio 是一个基于 Chrome Manifest V3 Side Panel API 的网页阅读与对话
 ## 代码地图
 
 - `manifest.json`：扩展入口、权限、图标及脚本注册。
-- `background.js`：后台 Service Worker，只负责 Side Panel 行为。
-- `content.js`：运行在网页中的内容脚本，提取页面信息。
-- `sidepanel.html` / `sidepanel.css` / `sidepanel.js`：侧边栏界面、标签页会话状态及模型请求。
+- `src/background/`：后台 Service Worker，只负责 Side Panel 行为。
+- `src/content/`：运行在网页中的内容脚本，提取页面信息。
+- `src/sidepanel/`：侧边栏界面、标签页会话状态及模型请求。
 - `assets/`：Logo 原图和 Chrome 多尺寸图标。
 - `scripts/`：工程校验和发布打包脚本。
 - `docs/`：架构、开发和隐私设计文档。
@@ -30,6 +30,9 @@ Curio 是一个基于 Chrome Manifest V3 Side Panel API 的网页阅读与对话
 - 使用原生 HTML、CSS 和 JavaScript；JavaScript 使用现代 ES 语法。
 - 遵守 Manifest V3 CSP：不得添加内联脚本、`eval`、远程执行代码或动态注入第三方脚本。
 - UI 文案默认使用简体中文；代码标识符使用清晰的英文名称。
+- 项目自有注释统一使用简体中文，并遵循对应语言的原生注释语法。
+- JavaScript 的文件职责、复杂函数及输入输出使用 JSDoc；HTML、CSS、Shell 分别使用标准注释格式；JSON 不添加注释。
+- 注释解释设计原因、安全边界和非显然约束，不逐行复述代码。完整规范见 `docs/CODE_STYLE.md`。
 - 用户可见错误需要可操作，不能只显示底层异常。
 - DOM 输出使用 `textContent` 等安全 API，不将模型或网页内容直接写入 `innerHTML`。
 - 新增资源后同步更新 `manifest.json`、校验脚本和相关文档。

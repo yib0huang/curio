@@ -1,3 +1,11 @@
+/**
+ * @file Curio 侧边栏控制器。
+ * 负责读取活动网页、维护标签页会话、调用模型 API 并安全渲染纯文本回答。
+ */
+
+/** @typedef {{apiUrl: string, apiKey: string, model: string}} ModelSettings */
+/** @typedef {{role: "user" | "assistant", content: string}} ConversationMessage */
+
 const DEFAULT_SETTINGS = {
   apiUrl: "https://api.openai.com/v1/responses",
   apiKey: "",
@@ -11,7 +19,15 @@ const state = {
   sending: false
 };
 
+/**
+ * 查询侧边栏中的单个元素。
+ *
+ * @param {string} selector CSS 选择器。
+ * @returns {Element | null} 匹配的元素。
+ */
 const $ = (selector) => document.querySelector(selector);
+
+// 缓存固定元素引用，避免在频繁渲染时重复查询 DOM。
 const elements = {
   pageStatus: $("#page-status"),
   pageCard: $("#page-card"),
@@ -30,22 +46,45 @@ const elements = {
   model: $("#model")
 };
 
+/**
+ * 获取当前标签页的会话；首次访问时创建空会话。
+ *
+ * @returns {ConversationMessage[]} 当前标签页的可变消息列表。
+ */
 function currentMessages() {
   if (!state.conversations.has(state.tabId)) state.conversations.set(state.tabId, []);
   return state.conversations.get(state.tabId);
 }
 
+/**
+ * 更新用户可见的错误提示。
+ *
+ * @param {string} message 错误信息；空字符串表示隐藏提示。
+ * @returns {void}
+ */
 function setError(message = "") {
   elements.error.textContent = message;
   elements.error.hidden = !message;
 }
 
+/**
+ * 切换请求状态并同步输入控件的可用性。
+ *
+ * @param {boolean} sending 是否正在等待模型回答。
+ * @returns {void}
+ */
 function setSending(sending) {
   state.sending = sending;
   elements.send.disabled = sending;
   elements.question.disabled = sending;
 }
 
+/**
+ * 使用纯文本节点重新渲染对话，防止网页或模型内容注入 HTML。
+ *
+ * @param {boolean} pending 是否显示等待回答状态。
+ * @returns {void}
+ */
 function renderMessages(pending = false) {
   const messages = currentMessages();
   elements.messages.replaceChildren();
@@ -69,6 +108,11 @@ function renderMessages(pending = false) {
   elements.messages.scrollTop = elements.messages.scrollHeight;
 }
 
+/**
+ * 根据当前页面快照更新页面摘要区域。
+ *
+ * @returns {void}
+ */
 function renderPage() {
   if (!state.page) {
     elements.pageCard.hidden = true;
@@ -80,6 +124,11 @@ function renderPage() {
   elements.pageStatus.textContent = state.page.text ? `已读取 ${state.page.text.length.toLocaleString()} 字符` : "页面没有可读取的正文";
 }
 
+/**
+ * 读取活动标签页，并向内容脚本请求最新页面快照。
+ *
+ * @returns {Promise<void>}
+ */
 async function readActivePage() {
   setError();
   elements.pageStatus.textContent = "正在读取当前网页…";
@@ -105,6 +154,11 @@ async function readActivePage() {
   }
 }
 
+/**
+ * 将页面快照封装为明确标注“不可信”的模型上下文。
+ *
+ * @returns {string} 提交给模型的页面上下文文本。
+ */
 function pageContext() {
   const page = state.page;
   return [
@@ -117,6 +171,12 @@ function pageContext() {
   ].filter(Boolean).join("\n");
 }
 
+/**
+ * 兼容 Responses API 的便捷字段和标准输出项，提取最终回答文本。
+ *
+ * @param {Record<string, *>} data Responses API 返回对象。
+ * @returns {string} 合并后的回答文本。
+ */
 function extractResponseText(data) {
   if (typeof data.output_text === "string" && data.output_text) return data.output_text;
   const parts = [];
@@ -128,10 +188,22 @@ function extractResponseText(data) {
   return parts.join("\n").trim();
 }
 
+/**
+ * 从浏览器本地存储读取模型设置，并补齐默认值。
+ *
+ * @returns {Promise<ModelSettings>} 当前模型设置。
+ */
 async function loadSettings() {
   return { ...DEFAULT_SETTINGS, ...(await chrome.storage.local.get(DEFAULT_SETTINGS)) };
 }
 
+/**
+ * 携带页面上下文和有限会话历史请求模型回答。
+ *
+ * @param {string} question 用户问题。
+ * @returns {Promise<string>} 模型回答。
+ * @throws {Error} 设置缺失、网络失败或模型返回空内容时抛出。
+ */
 async function askModel(question) {
   const settings = await loadSettings();
   if (!settings.apiKey) {
@@ -143,6 +215,7 @@ async function askModel(question) {
   const input = [
     { role: "developer", content: "你是 Curio，一个严谨、友好的网页阅读助手。优先依据提供的网页回答；若资料不足要明确说明。回答使用与用户相同的语言，保持清晰简洁。" },
     { role: "user", content: pageContext() },
+    // 每轮包含一问一答，因此 12 条消息对应最近 6 轮，避免上下文无限增长。
     ...conversation.slice(-12),
     { role: "user", content: question }
   ];
@@ -163,6 +236,12 @@ async function askModel(question) {
   return answer;
 }
 
+/**
+ * 校验并提交用户问题，同时维护输入、错误和加载状态。
+ *
+ * @param {string} rawQuestion 输入框中的原始问题。
+ * @returns {Promise<void>}
+ */
 async function submitQuestion(rawQuestion) {
   const question = rawQuestion.trim();
   if (!question || state.sending) return;
@@ -190,6 +269,11 @@ async function submitQuestion(rawQuestion) {
   }
 }
 
+/**
+ * 读取已有设置并打开模型配置对话框。
+ *
+ * @returns {Promise<void>}
+ */
 async function openSettings() {
   const settings = await loadSettings();
   elements.apiUrl.value = settings.apiUrl;
@@ -198,6 +282,7 @@ async function openSettings() {
   elements.settings.showModal();
 }
 
+// 输入与快捷问题交互。
 elements.composer.addEventListener("submit", (event) => {
   event.preventDefault();
   submitQuestion(elements.question.value);
@@ -219,6 +304,7 @@ document.querySelectorAll("[data-question]").forEach((button) => {
   button.addEventListener("click", () => submitQuestion(button.dataset.question));
 });
 
+// 页面读取与设置操作。
 $("#refresh-page").addEventListener("click", readActivePage);
 $("#open-settings").addEventListener("click", openSettings);
 $("#close-settings").addEventListener("click", () => elements.settings.close());
@@ -234,6 +320,7 @@ elements.settingsForm.addEventListener("submit", async (event) => {
   setError();
 });
 
+// 标签页发生切换或完成导航时重新读取，确保上下文对应用户当前看到的页面。
 chrome.tabs.onActivated.addListener(readActivePage);
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (tabId === state.tabId && changeInfo.status === "complete") readActivePage();
