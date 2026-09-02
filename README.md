@@ -24,6 +24,26 @@ Curio 是一个 Chrome Side Panel 扩展：读取当前标签页的正文，并�
 
 ## 工程命令
 
+项目提供 Makefile 作为统一任务入口；它复用 `package.json` 和 `scripts/` 中的现有实现，不引入额外依赖：
+
+```bash
+make help
+make install
+make check
+make build
+make package
+```
+
+- `make help`：列出全部目标、用途和可覆盖变量。
+- `make doctor`：检查 Node.js、npm、`zip` 和 `unzip` 环境。
+- `make dev`：启动 Vite/CRXJS 开发构建和文件监听。
+- `make check`：执行 TypeScript 类型检查以及 Manifest、资源和版本校验。
+- `make build`：完成检查并生成可由 Chrome 加载的 `dist/` 目录。
+- `make package`：构建 `release/curio-<version>.zip`，校验归档完整性和根级 Manifest，并输出文件清单。
+- `make ci`：按锁文件安装依赖，并执行 CI 所需的检查、构建和打包。
+
+不使用 Make 时，等价的 npm 命令仍然可用：
+
 ```bash
 npm install
 npm run dev
@@ -32,14 +52,14 @@ npm run build
 npm run package
 ```
 
-- `npm run dev`：启动 Vite/CRXJS 开发构建和文件监听。
-- `npm run check`：执行 TypeScript 类型检查以及 Manifest、资源和版本校验。
-- `npm run build`：生成可由 Chrome 加载的 `dist/` 目录。
-- `npm run package`：构建后生成 `release/curio-<version>.zip` 发布包。
+- `npm run dev`：等价于 `make dev`。
+- `npm run check`：等价于 `make check`。
+- `npm run build`：等价于 `make build`。
+- `npm run package`：完成构建并生成发布包；`make package` 会额外列出 ZIP 内容。
 
 ## 本地安装
 
-1. 执行 `npm install` 和 `npm run build`。
+1. 执行 `make install` 和 `make build`（也可使用对应 npm 命令）。
 2. 打开 `chrome://extensions/`。
 3. 开启右上角的「开发者模式」。
 4. 点击「加载已解压的扩展程序」，选择本项目的 `dist/` 目录。

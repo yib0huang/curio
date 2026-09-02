@@ -42,13 +42,19 @@ export function SettingsDialog({ open, settings, onClose, onSave }: SettingsDial
           </button>
         </div>
         <label>
-          API 地址
+          Responses API 完整地址
           <input
             type="url"
             required
+            aria-describedby="api-url-hint"
+            placeholder="https://api.deepseek.com/responses"
             value={draft?.apiUrl ?? ""}
             onChange={(event) => draft && setDraft({ ...draft, apiUrl: event.target.value })}
           />
+          <span id="api-url-hint" className="field-note">
+            需包含接口路径，例如 DeepSeek 使用 https://api.deepseek.com/responses，OpenAI
+            使用 https://api.openai.com/v1/responses。
+          </span>
         </label>
         <label>
           API Key
