@@ -2,7 +2,7 @@
  * @file 扩展各运行上下文共享的领域类型。
  */
 
-/** 当前网页经过清理后的内容快照。 */
+/** 当前网页经过清理并转换为 Markdown 风格正文后的内容快照。 */
 export interface PageSnapshot {
   title: string;
   url: string;
