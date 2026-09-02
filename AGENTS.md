@@ -11,9 +11,11 @@ Curio 是一个基于 Chrome Manifest V3 Side Panel API 的网页阅读与对话
 ## 开始工作前
 
 1. 阅读 `README.md` 和与任务相关的 `docs/` 文档。
-2. 运行 `git status --short`，保留用户已有修改，不覆盖无关变更。
-3. 阅读待修改文件及其直接调用方，确认 Manifest 权限和数据流影响。
-4. 若任务涉及权限、隐私或模型请求，同时阅读 `SECURITY.md` 和 `docs/PRIVACY.md`。
+2. 阅读 `docs/GIT_WORKFLOW.md`，运行 `git status --short --branch`，确认当前分支与工作区状态。
+3. 确认任务已经完成开发申请，且当前位于符合任务类型的主题分支；不得直接在 `master` 或 `develop` 上开发。
+4. 保留用户已有修改，不覆盖、暂存或提交无关变更。
+5. 阅读待修改文件及其直接调用方，确认 Manifest 权限和数据流影响。
+6. 若任务涉及权限、隐私或模型请求，同时阅读 `SECURITY.md` 和 `docs/PRIVACY.md`。
 
 ## 代码地图
 
@@ -84,11 +86,30 @@ unzip -l release/curio-<version>.zip
 
 ## Git 约定
 
-- `master` 是生产主分支，`develop` 是日常集成分支。
-- 普通开发从 `develop` 创建 `feature/*` 或 `fix/*` 分支，并通过 Pull Request 回到 `develop`。
-- `release/*` 从 `develop` 创建，完成后合并到 `master` 并回合并 `develop`。
-- `hotfix/*` 从 `master` 创建，完成后同时合并到 `master` 和 `develop`。
-- 未经用户明确要求，AI 代理不得直接向 `master` 提交普通功能，也不得自行创建版本标签或推送远端。
-- 提交应小而聚焦，使用 Conventional Commits：`feat:`、`fix:`、`docs:`、`refactor:`、`test:`、`chore:`。
-- 不重写用户提交，不使用破坏性 Git 命令，不提交 `dist/`、`release/`、密钥或本地环境文件。
-- 完整规则见 `docs/GIT_WORKFLOW.md`。
+以下规则是所有人工开发与 AI 开发的强制流程，完整定义、申请模板和命令见 `docs/GIT_WORKFLOW.md`。
+
+### 分支与申请
+
+- `master` 是生产分支，`develop` 是日常集成分支；二者都是受保护长期分支，禁止直接开发和直接提交。
+- 开始修改前必须有可追溯的开发申请。GitHub Issue、工单或用户在当前会话中明确提出并批准的任务均可作为申请；申请至少包含目标、范围、验收标准、风险及建议分支名。
+- AI 在创建分支前必须复述申请编号或会话任务、基线分支和拟用分支名。需求明确且用户已要求实施时，可将该指令视为批准；范围不明确或会扩大权限、数据流、依赖时必须先询问。
+- 普通主题分支从最新 `develop` 创建，命名为 `<type>/<issue>-<slug>`；没有 Issue 时可用 `<type>/<slug>`。允许类型：`feature`、`fix`、`docs`、`refactor`、`test`、`chore`。
+- `release/<version>` 从 `develop` 创建；`hotfix/<issue>-<slug>` 或 `hotfix/<version>` 从 `master` 创建。
+- 一个分支只处理一个申请。发现无关问题时另建申请和分支，不顺手混入。
+
+### 开发与提交
+
+- 修改前再次运行 `git status --short --branch`；若存在来源不明的改动，先识别归属，不得覆盖或混入提交。
+- 提交前必须检查 `git diff`、运行与改动匹配的验证，并使用明确文件路径暂存；禁止无检查地使用 `git add .`、`git add -A` 或提交整个脏工作区。
+- 暂存后必须运行 `git diff --cached --check`，并检查 `git diff --cached` 与 `git status --short`，确认没有生成物、密钥、用户数据和无关文件。
+- 每个提交保持单一目的并可独立审查。提交信息使用 Conventional Commits：`<type>(<scope>): <summary>`；`scope` 可省略，摘要使用英文祈使句、不加句号，建议不超过 72 个字符。
+- 允许的提交类型为 `feat`、`fix`、`docs`、`refactor`、`test`、`chore`、`build`、`ci`、`perf`、`revert`。破坏性变更使用 `!` 并在正文中写 `BREAKING CHANGE:`。
+- 不使用 `--no-verify` 绕过检查，不修改或重写用户提交，不使用破坏性 Git 命令。未经用户明确要求，不执行 rebase、force push、创建标签、推送远端或合并长期分支。
+
+### 合并与完成
+
+- `feature/*`、`fix/*`、`docs/*`、`refactor/*`、`test/*`、`chore/*` 通过 Pull Request 合并到 `develop`，推荐 Squash and merge。
+- `release/*` 通过 Pull Request 合并到 `master`，发布后必须回合并 `develop`；`hotfix/*` 必须分别合并到 `master` 和 `develop`。
+- PR 必须关联开发申请，说明范围、验证、风险、权限与隐私影响；CI 通过且评审意见解决后方可合并。
+- AI 完成任务时必须报告当前分支、改动摘要、验证结果、是否已提交/推送/创建 PR，以及仍需用户处理的后续步骤。
+- 不提交 `dist/`、`release/`、`node_modules/`、密钥、用户数据或本地环境文件。
