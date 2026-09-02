@@ -25,7 +25,7 @@ function buildPageContext(page: PageSnapshot): string {
     `标题：${page.title || "未知"}`,
     `网址：${page.url || "未知"}`,
     page.description ? `描述：${page.description}` : "",
-    "网页正文：",
+    "网页正文（Markdown 结构）：",
     page.text || "（未提取到正文）"
   ]
     .filter(Boolean)
