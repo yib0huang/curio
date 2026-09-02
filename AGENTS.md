@@ -75,7 +75,11 @@ unzip -l dist/curio-<version>.zip
 
 ## Git 约定
 
-- 主分支为 `main`。
-- 提交应小而聚焦，推荐使用 Conventional Commits：`feat:`、`fix:`、`docs:`、`refactor:`、`test:`、`chore:`。
+- `master` 是生产主分支，`develop` 是日常集成分支。
+- 普通开发从 `develop` 创建 `feature/*` 或 `fix/*` 分支，并通过 Pull Request 回到 `develop`。
+- `release/*` 从 `develop` 创建，完成后合并到 `master` 并回合并 `develop`。
+- `hotfix/*` 从 `master` 创建，完成后同时合并到 `master` 和 `develop`。
+- 未经用户明确要求，AI 代理不得直接向 `master` 提交普通功能，也不得自行创建版本标签或推送远端。
+- 提交应小而聚焦，使用 Conventional Commits：`feat:`、`fix:`、`docs:`、`refactor:`、`test:`、`chore:`。
 - 不重写用户提交，不使用破坏性 Git 命令，不提交 `dist/`、密钥或本地环境文件。
-
+- 完整规则见 `docs/GIT_WORKFLOW.md`。

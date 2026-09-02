@@ -7,6 +7,8 @@
 ### Added
 
 - AI 代理协作约定与工程文档。
+- 基于 `master`、`develop` 和临时分支的 Git Flow 管理规范。
+- Pull Request 模板和 GitHub Actions 工程校验。
 
 ## [0.1.0] - 2026-09-02
 
@@ -19,4 +21,3 @@
 - 按标签页隔离的会话状态。
 - 本地模型设置、工程校验和发布打包脚本。
 - Curio 品牌 Logo 及 Chrome 多尺寸图标。
-

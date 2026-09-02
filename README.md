@@ -16,6 +16,7 @@ Curio 是一个 Chrome Side Panel 扩展：读取当前标签页的正文，并�
 - [贡献指南](CONTRIBUTING.md)
 - [架构说明](docs/ARCHITECTURE.md)
 - [开发与发布](docs/DEVELOPMENT.md)
+- [Git 分支管理](docs/GIT_WORKFLOW.md)
 - [隐私与数据处理](docs/PRIVACY.md)
 - [安全策略](SECURITY.md)
 - [版本记录](CHANGELOG.md)

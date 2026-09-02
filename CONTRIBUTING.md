@@ -13,12 +13,16 @@
 
 ## 开发流程
 
-1. 从 `main` 创建主题分支。
-2. 保持一次变更只解决一个明确问题。
-3. 运行 `npm run check`。
-4. 在 `chrome://extensions/` 重新加载扩展并手动验证相关流程。
-5. 涉及发布内容时运行 `npm run package` 并检查 ZIP 文件列表。
-6. 更新 README、CHANGELOG 或 `docs/` 中受影响的内容。
+1. 切换到 `develop` 并使用 `git pull --ff-only` 更新本地分支。
+2. 从 `develop` 创建 `feature/*` 或 `fix/*` 主题分支。
+3. 保持一次变更只解决一个明确问题。
+4. 运行 `npm run check`。
+5. 在 `chrome://extensions/` 重新加载扩展并手动验证相关流程。
+6. 涉及发布内容时运行 `npm run package` 并检查 ZIP 文件列表。
+7. 更新 README、CHANGELOG 或 `docs/` 中受影响的内容。
+8. 通过 Pull Request 合并回 `develop`，不要直接推送长期分支。
+
+完整的分支类型、发布和热修复流程见 [`docs/GIT_WORKFLOW.md`](docs/GIT_WORKFLOW.md)。
 
 ## 提交规范
 
@@ -45,4 +49,3 @@ chore: update release packaging
 - 标注新增权限、数据流或隐私影响。
 - UI 变化附上截图；行为变化提供复现步骤。
 - 已知限制和后续工作需要明确列出。
-
