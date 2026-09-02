@@ -11,7 +11,7 @@ export function Header({ pageStatus, onRefresh, onOpenSettings }: HeaderProps) {
       <div className="brand">
         <img
           className="brand-mark"
-          src={chrome.runtime.getURL("assets/icons-v3/icon-48.png")}
+          src={chrome.runtime.getURL("assets/icons/icon-48.png")}
           alt="Curio"
         />
         <div>

@@ -4,10 +4,10 @@
   "version": "0.1.0",
   "description": "读取当前网页，并围绕网页内容进行多轮对话。",
   "icons": {
-    "16": "assets/icons-v3/icon-16.png",
-    "32": "assets/icons-v3/icon-32.png",
-    "48": "assets/icons-v3/icon-48.png",
-    "128": "assets/icons-v3/icon-128.png"
+    "16": "assets/icons/icon-16.png",
+    "32": "assets/icons/icon-32.png",
+    "48": "assets/icons/icon-48.png",
+    "128": "assets/icons/icon-128.png"
   },
   "permissions": ["activeTab", "sidePanel", "storage", "tabs"],
   "host_permissions": ["<all_urls>"],
@@ -18,8 +18,8 @@
   "action": {
     "default_title": "打开 Curio",
     "default_icon": {
-      "16": "assets/icons-v3/icon-16.png",
-      "32": "assets/icons-v3/icon-32.png"
+      "16": "assets/icons/icon-16.png",
+      "32": "assets/icons/icon-32.png"
     }
   },
   "side_panel": {
