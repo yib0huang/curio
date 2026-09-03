@@ -32,15 +32,6 @@ export interface ModelSettings {
   model: string;
 }
 
-/** Responses API 在单轮请求完成后返回的 token 用量。 */
-export interface TokenUsage {
-  inputTokens: number;
-  cachedInputTokens: number;
-  outputTokens: number;
-  reasoningTokens: number;
-  totalTokens: number;
-}
-
 /** 一条可发送给模型的对话消息。 */
 export interface ConversationMessage {
   role: "user" | "assistant";
@@ -57,8 +48,6 @@ export interface ConversationMessage {
   startedAt?: number;
   /** 请求完成时冻结的总耗时，避免历史消息继续计时。 */
   elapsedSeconds?: number;
-  /** 请求完成后返回的 token 分布，不在流式阶段估算。 */
-  tokenUsage?: TokenUsage;
 }
 
 /** 内容脚本支持的读取页面消息。 */

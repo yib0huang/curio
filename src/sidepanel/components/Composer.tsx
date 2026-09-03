@@ -1,8 +1,13 @@
-import { FormEvent, KeyboardEvent, useState } from "react";
-import type { PageSnapshot } from "../../shared/types";
+import { FormEvent, KeyboardEvent, useMemo, useState } from "react";
+import type { ConversationMessage, PageSnapshot } from "../../shared/types";
+import {
+  estimateDraftInputTokens,
+  estimateNextInputUsage
+} from "../services/PromptContext";
 
 interface ComposerProps {
   page: PageSnapshot | null;
+  messages: ConversationMessage[];
   pageStatus: string;
   error: string;
   disabled: boolean;
@@ -14,6 +19,7 @@ interface ComposerProps {
 /** 管理问题草稿、页面操作和当前网页信息。 */
 export function Composer({
   page,
+  messages,
   pageStatus,
   error,
   disabled,
@@ -22,6 +28,21 @@ export function Composer({
   onSubmit
 }: ComposerProps) {
   const [question, setQuestion] = useState("");
+  const [usageOpen, setUsageOpen] = useState(false);
+  const baseUsage = useMemo(
+    () => estimateNextInputUsage(page, messages, ""),
+    [messages, page]
+  );
+  const draftTokens = useMemo(() => estimateDraftInputTokens(question), [question]);
+  const usage = useMemo(() => {
+    const segments = baseUsage.segments.map((segment) =>
+      segment.key === "draft" ? { ...segment, tokens: draftTokens } : segment
+    );
+    return {
+      segments,
+      totalTokens: segments.reduce((total, segment) => total + segment.tokens, 0)
+    };
+  }, [baseUsage, draftTokens]);
 
   const submit = async (event?: FormEvent) => {
     event?.preventDefault();
@@ -49,6 +70,57 @@ export function Composer({
           onChange={(event) => setQuestion(event.target.value)}
           onKeyDown={handleKeyDown}
         />
+        <div className="context-usage">
+          <button
+            className="context-usage-trigger"
+            type="button"
+            title="查看下一轮上下文用量"
+            aria-label="查看下一轮上下文用量"
+            aria-expanded={usageOpen}
+            onClick={() => setUsageOpen((current) => !current)}
+          >
+            <span className="context-usage-ring" aria-hidden="true" />
+          </button>
+          {usageOpen && (
+            <div className="context-usage-popover" role="dialog" aria-label="下一轮 Token 组成">
+              <div className="context-usage-header">
+                <div>
+                  <strong>下一轮将发送</strong>
+                  <span>约 {usage.totalTokens.toLocaleString()} tokens</span>
+                </div>
+                <button
+                  className="context-usage-close"
+                  type="button"
+                  aria-label="关闭下一轮 Token 组成"
+                  onClick={() => setUsageOpen(false)}
+                >
+                  ×
+                </button>
+              </div>
+              <div className="context-usage-bar" aria-hidden="true">
+                {usage.segments.filter((segment) => segment.tokens > 0).map((segment) => (
+                  <span
+                    className={`context-${segment.key}`}
+                    key={segment.key}
+                    style={{ width: `${(segment.tokens / Math.max(1, usage.totalTokens)) * 100}%` }}
+                  />
+                ))}
+              </div>
+              <dl className="context-usage-list">
+                {usage.segments.map((segment) => (
+                  <div key={segment.key}>
+                    <dt>
+                      <span className={`context-usage-dot context-${segment.key}`} aria-hidden="true" />
+                      {segment.label}
+                    </dt>
+                    <dd>{segment.tokens.toLocaleString()}</dd>
+                  </div>
+                ))}
+              </dl>
+              <p className="context-usage-note">按当前草稿估算，实际以模型分词为准</p>
+            </div>
+          )}
+        </div>
         <button type="submit" aria-label="发送" disabled={disabled || !question.trim()}>
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M12 19V5M6.5 10.5 12 5l5.5 5.5" />

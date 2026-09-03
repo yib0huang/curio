@@ -47,8 +47,7 @@ describe("ResponsesClient", () => {
           output: [
             { type: "reasoning", summary: [{ text: "先分析" }] },
             { type: "message", content: [{ text: "最终回答" }] }
-          ],
-          usage: { output_tokens: 42 }
+          ]
         }
       }
     ]);
@@ -66,14 +65,7 @@ describe("ResponsesClient", () => {
 
     expect(result).toEqual({
       content: "最终回答",
-      reasoning: "先分析",
-      tokenUsage: {
-        inputTokens: 0,
-        cachedInputTokens: 0,
-        outputTokens: 42,
-        reasoningTokens: 0,
-        totalTokens: 42
-      }
+      reasoning: "先分析"
     });
     expect(progress.length).toBeGreaterThanOrEqual(4);
     const request = fetchMock.mock.calls[0]?.[1];
@@ -100,8 +92,7 @@ describe("ResponsesClient", () => {
               output: [
                 { type: "reasoning", content: [{ text: "内部分析" }] },
                 { type: "message", content: [{ text: "最终回答" }] }
-              ],
-              usage: { output_tokens: 18 }
+              ]
             }
           }
         ])
@@ -119,14 +110,7 @@ describe("ResponsesClient", () => {
 
     expect(result).toEqual({
       content: "最终回答",
-      reasoning: "内部分析",
-      tokenUsage: {
-        inputTokens: 0,
-        cachedInputTokens: 0,
-        outputTokens: 18,
-        reasoningTokens: 0,
-        totalTokens: 18
-      }
+      reasoning: "内部分析"
     });
     expect(progress.at(-1)).toEqual(result);
   });
@@ -174,43 +158,4 @@ describe("ResponsesClient", () => {
     ).rejects.toThrow("完成前中断");
   });
 
-  it("流式阶段不报告 token，并在完成事件后采用可见 output usage", async () => {
-    const response = createStreamResponse([
-      { type: "response.output_text.delta", delta: "实时" },
-      { type: "response.output_text.delta", delta: "回答" },
-      {
-        type: "response.completed",
-        response: {
-          output: [{ type: "message", content: [{ text: "实时回答" }] }],
-          usage: {
-            input_tokens: 100,
-            input_tokens_details: { cached_tokens: 20 },
-            output_tokens: 9,
-            output_tokens_details: { reasoning_tokens: 4 },
-            total_tokens: 109
-          }
-        }
-      }
-    ]);
-    vi.stubGlobal("fetch", vi.fn<typeof fetch>(async () => response));
-    const progress: Array<{ tokenUsage?: { outputTokens: number } }> = [];
-
-    const result = await new ResponsesClient().answer(
-      settings,
-      page,
-      [],
-      "问题",
-      (snapshot) => progress.push(snapshot)
-    );
-
-    expect(progress[0]?.tokenUsage).toBeUndefined();
-    expect(progress.at(-1)?.tokenUsage).toEqual({
-      inputTokens: 100,
-      cachedInputTokens: 20,
-      outputTokens: 9,
-      reasoningTokens: 4,
-      totalTokens: 109
-    });
-    expect(result.tokenUsage).toEqual(progress.at(-1)?.tokenUsage);
-  });
 });

@@ -15,6 +15,7 @@ export function App() {
         <MessageList messages={controller.messages} />
         <Composer
           page={controller.page}
+          messages={controller.messages}
           pageStatus={controller.pageStatus}
           error={controller.error}
           disabled={controller.sending}

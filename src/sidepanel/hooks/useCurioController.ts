@@ -110,8 +110,7 @@ export function useCurioController() {
             const nextMessages = conversationStore.updateStreamingAssistant(
               requestTabId,
               progress.content,
-              progress.reasoning,
-              progress.tokenUsage
+              progress.reasoning
             );
             if (activeTabIdRef.current === requestTabId) setMessages(nextMessages);
           }
@@ -119,8 +118,7 @@ export function useCurioController() {
         conversationStore.updateStreamingAssistant(
           requestTabId,
           answer.content,
-          answer.reasoning,
-          answer.tokenUsage
+          answer.reasoning
         );
         const nextMessages = conversationStore.completeTurn(requestTabId);
         if (activeTabIdRef.current === requestTabId) setMessages(nextMessages);
