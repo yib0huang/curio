@@ -66,17 +66,21 @@ describe("Composer", () => {
     fireEvent.click(trigger);
     expect(screen.getByText("上下文使用情况")).toBeTruthy();
     expect(screen.getByText(/约 .* \/ 1M tokens/)).toBeTruthy();
-    expect(screen.getByText(/下一轮预计发送约 .* tokens/)).toBeTruthy();
+    expect(screen.queryByText(/下一轮预计发送/)).toBeNull();
+    expect(screen.queryByText(/按当前草稿估算/)).toBeNull();
     expect(screen.getByText("系统提示")).toBeTruthy();
     expect(screen.getByText("网页上下文")).toBeTruthy();
     expect(screen.getByText("对话历史（最近 6 轮）")).toBeTruthy();
     expect(screen.getByText("当前输入")).toBeTruthy();
     expect(screen.queryByText(/输出|推理/)).toBeNull();
 
-    const totalBefore = screen.getByText(/下一轮预计发送约 .* tokens/).textContent;
+    const totalBefore = screen.getByText(/约 .* \/ 1M tokens/).textContent;
     fireEvent.change(screen.getByLabelText("问题"), {
       target: { value: "请详细概括这一页的主要内容" }
     });
-    expect(screen.getByText(/下一轮预计发送约 .* tokens/).textContent).not.toBe(totalBefore);
+    expect(screen.getByText(/约 .* \/ 1M tokens/).textContent).not.toBe(totalBefore);
+
+    fireEvent.pointerDown(document.body);
+    expect(screen.queryByRole("dialog", { name: "上下文使用情况" })).toBeNull();
   });
 });

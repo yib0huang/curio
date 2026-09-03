@@ -1,4 +1,4 @@
-import { FormEvent, KeyboardEvent, useMemo, useState } from "react";
+import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { ConversationMessage, PageSnapshot } from "../../shared/types";
 import {
   estimateDraftInputTokens,
@@ -38,6 +38,7 @@ export function Composer({
 }: ComposerProps) {
   const [question, setQuestion] = useState("");
   const [usageOpen, setUsageOpen] = useState(false);
+  const usageRef = useRef<HTMLDivElement>(null);
   const baseUsage = useMemo(
     () => estimateNextInputUsage(page, messages, ""),
     [messages, page]
@@ -54,6 +55,17 @@ export function Composer({
   }, [baseUsage, draftTokens]);
   const usagePercent = Math.min(100, usage.totalTokens / MODEL_CONTEXT_LIMIT * 100);
   const usagePercentLabel = formatUsagePercent(usage.totalTokens);
+
+  useEffect(() => {
+    if (!usageOpen) return;
+    const closeOutside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !usageRef.current?.contains(event.target)) {
+        setUsageOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    return () => document.removeEventListener("pointerdown", closeOutside);
+  }, [usageOpen]);
 
   const submit = async (event?: FormEvent) => {
     event?.preventDefault();
@@ -81,7 +93,7 @@ export function Composer({
           onChange={(event) => setQuestion(event.target.value)}
           onKeyDown={handleKeyDown}
         />
-        <div className="context-usage">
+        <div className="context-usage" ref={usageRef}>
           <button
             className="context-usage-trigger"
             type="button"
@@ -119,9 +131,6 @@ export function Composer({
                 <span>{usagePercentLabel} 已占用</span>
                 <span>约 {usage.totalTokens.toLocaleString()} / 1M tokens</span>
               </div>
-              <p className="context-next-turn">
-                下一轮预计发送约 {usage.totalTokens.toLocaleString()} tokens
-              </p>
               <div className="context-usage-bar" aria-hidden="true">
                 {usage.segments.filter((segment) => segment.tokens > 0).map((segment) => (
                   <span
@@ -142,7 +151,6 @@ export function Composer({
                   </div>
                 ))}
               </dl>
-              <p className="context-usage-note">按当前草稿估算，实际以模型分词为准</p>
             </div>
           )}
         </div>

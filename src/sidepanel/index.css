@@ -122,8 +122,7 @@ button { cursor: pointer; }
 .context-usage-close { display: grid; flex: 0 0 26px; place-items: center; width: 26px; height: 26px; margin: -5px -5px 0 0; padding: 0; border: 0; border-radius: 7px; background: transparent; color: #87949a; font-size: 20px; line-height: 1; }
 .context-usage-close:hover { background: #e8eff1; color: #536168; }
 .context-usage-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #7f8c92; font-size: 12px; font-variant-numeric: tabular-nums; }
-.context-next-turn { margin: 5px 0 12px; color: #65737a; font-size: 12px; }
-.context-usage-bar { display: flex; width: 100%; height: 8px; margin-bottom: 14px; overflow: hidden; border-radius: 999px; background: #e8edef; }
+.context-usage-bar { display: flex; width: 100%; height: 8px; margin: 12px 0 14px; overflow: hidden; border-radius: 999px; background: #e8edef; }
 .context-usage-bar span { min-width: 2px; }
 .context-system { background: #89939f; }
 .context-page { background: #ad83d5; }
@@ -134,7 +133,6 @@ button { cursor: pointer; }
 .context-usage-list dt { display: flex; align-items: center; gap: 9px; min-width: 0; }
 .context-usage-list dd { margin: 0; color: #65737a; font-variant-numeric: tabular-nums; }
 .context-usage-dot { flex: 0 0 10px; width: 10px; height: 10px; border-radius: 3px; }
-.context-usage-note { margin: 12px 0 0; color: #929da2; font-size: 11px; }
 .composer-toolbar { display: flex; align-items: center; gap: 6px; width: 100%; min-width: 0; height: 32px; margin-top: 8px; }
 .icon-button { display: grid; flex: 0 0 32px; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; background: transparent; border-radius: 8px; color: #62615d; }
 .icon-button:hover { background: #efefeb; }
@@ -187,8 +185,7 @@ dialog::backdrop { background: rgba(20, 18, 14, .35); }
   .context-usage-ring-value { stroke: #a99cf4; }
   .context-usage-popover { border-color: #3c484d; background: #20292d; box-shadow: 0 14px 38px rgba(0, 0, 0, .34); color: #bdc8cc; }
   .context-usage-header strong { color: #e0e7e9; }
-  .context-usage-summary, .context-usage-note { color: #8f9da3; }
-  .context-next-turn { color: #a8b5ba; }
+  .context-usage-summary { color: #8f9da3; }
   .context-usage-close { color: #8f9da3; }
   .context-usage-close:hover { background: #2f3b40; color: #d8e1e4; }
   .context-usage-bar { background: #354146; }
