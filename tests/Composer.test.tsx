@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Composer } from "../src/sidepanel/components/Composer";
 
@@ -20,9 +20,10 @@ describe("Composer", () => {
         messages={[]}
         pageStatus="已读取 12,404 字符"
         error=""
-        disabled={false}
+        sending={false}
         onRefresh={vi.fn()}
         onOpenSettings={vi.fn()}
+        onStop={vi.fn()}
         onSubmit={vi.fn(async () => true)}
       />
     );
@@ -53,9 +54,10 @@ describe("Composer", () => {
         ]}
         pageStatus="已读取"
         error=""
-        disabled={false}
+        sending={false}
         onRefresh={vi.fn()}
         onOpenSettings={vi.fn()}
+        onStop={vi.fn()}
         onSubmit={vi.fn(async () => true)}
       />
     );
@@ -82,5 +84,62 @@ describe("Composer", () => {
 
     fireEvent.pointerDown(document.body);
     expect(screen.queryByRole("dialog", { name: "上下文使用情况" })).toBeNull();
+  });
+
+  it("请求受理后立即清空输入框，请求失败时恢复原问题", async () => {
+    let finishRequest: ((succeeded: boolean) => void) | undefined;
+    const onSubmit = vi.fn(
+      (_question: string, onAccepted?: () => void) => {
+        onAccepted?.();
+        return new Promise<boolean>((resolve) => {
+          finishRequest = resolve;
+        });
+      }
+    );
+    render(
+      <Composer
+        page={null}
+        messages={[]}
+        pageStatus="已读取"
+        error=""
+        sending={false}
+        onRefresh={vi.fn()}
+        onOpenSettings={vi.fn()}
+        onStop={vi.fn()}
+        onSubmit={onSubmit}
+      />
+    );
+
+    const textarea = screen.getByLabelText("问题") as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: "需要重试的问题" } });
+    fireEvent.click(screen.getByLabelText("发送"));
+
+    expect(onSubmit).toHaveBeenCalledWith("需要重试的问题", expect.any(Function));
+    expect(textarea.value).toBe("");
+
+    await act(async () => finishRequest?.(false));
+    expect(textarea.value).toBe("需要重试的问题");
+  });
+
+  it("生成期间把发送按钮切换为停止按钮", () => {
+    const onStop = vi.fn();
+    render(
+      <Composer
+        page={null}
+        messages={[]}
+        pageStatus="已读取"
+        error=""
+        sending
+        onRefresh={vi.fn()}
+        onOpenSettings={vi.fn()}
+        onStop={onStop}
+        onSubmit={vi.fn(async () => true)}
+      />
+    );
+
+    expect((screen.getByLabelText("问题") as HTMLTextAreaElement).disabled).toBe(true);
+    fireEvent.click(screen.getByLabelText("停止生成"));
+    expect(onStop).toHaveBeenCalledTimes(1);
+    expect(screen.queryByLabelText("发送")).toBeNull();
   });
 });

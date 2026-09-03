@@ -91,10 +91,11 @@ describe("useCurioController", () => {
     expect(mocks.readActivePage).toHaveBeenNthCalledWith(1);
     order.length = 0;
 
+    const onAccepted = vi.fn(() => order.push("accepted"));
     await act(async () => {
-      expect(await result.current.submitQuestion("第一个问题")).toBe(true);
+      expect(await result.current.submitQuestion("第一个问题", onAccepted)).toBe(true);
     });
-    expect(order).toEqual(["read", "answer"]);
+    expect(order).toEqual(["accepted", "read", "answer"]);
     expect(mocks.readActivePage).toHaveBeenLastCalledWith({ scanVirtualPages: true });
     expect(result.current.messages.map((message) => message.kind)).toEqual([
       undefined,
@@ -133,5 +134,40 @@ describe("useCurioController", () => {
     expect(compressedHistory[0].content).toContain("压缩后的历史摘要");
     expect(result.current.messages.some((message) => message.content === longAnswer)).toBe(true);
     expect(result.current.messages.at(-1)?.content).toBe("压缩后继续回答");
+  });
+
+  it("可以中止当前流式回答并保留已生成内容", async () => {
+    mocks.answer.mockImplementation((...args: unknown[]) => {
+      const onProgress = args[4] as (progress: { content: string; reasoning: string }) => void;
+      const signal = args[5] as AbortSignal;
+      onProgress({ content: "部分回答", reasoning: "" });
+      return new Promise((_resolve, reject) => {
+        signal.addEventListener("abort", () => {
+          reject(new DOMException("The operation was aborted", "AbortError"));
+        });
+      });
+    });
+
+    const { result } = renderHook(() => useCurioController());
+    await waitFor(() => expect(result.current.page).not.toBeNull());
+
+    let submission: Promise<boolean> | undefined;
+    act(() => {
+      submission = result.current.submitQuestion("停止测试");
+    });
+    await waitFor(() => expect(mocks.answer).toHaveBeenCalledTimes(1));
+    expect(result.current.sending).toBe(true);
+
+    act(() => result.current.stopGeneration());
+    await act(async () => {
+      expect(await submission).toBe(true);
+    });
+
+    expect(result.current.sending).toBe(false);
+    expect(result.current.error).toBe("");
+    expect(result.current.messages.at(-1)).toMatchObject({
+      content: "部分回答",
+      status: "stopped"
+    });
   });
 });

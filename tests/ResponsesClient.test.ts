@@ -79,13 +79,15 @@ describe("ResponsesClient", () => {
     const fetchMock = vi.fn<typeof fetch>(async () => response);
     vi.stubGlobal("fetch", fetchMock);
     const progress: object[] = [];
+    const abortController = new AbortController();
 
     const result = await new ResponsesClient().answer(
       settings,
       page,
       [],
       "问题",
-      (snapshot) => progress.push(snapshot)
+      (snapshot) => progress.push(snapshot),
+      abortController.signal
     );
 
     expect(result).toEqual({
@@ -94,6 +96,7 @@ describe("ResponsesClient", () => {
     });
     expect(progress.length).toBeGreaterThanOrEqual(4);
     const request = fetchMock.mock.calls[0]?.[1];
+    expect(request?.signal).toBe(abortController.signal);
     const requestBody = JSON.parse(String(request?.body));
     expect(requestBody).toMatchObject({
       stream: true,

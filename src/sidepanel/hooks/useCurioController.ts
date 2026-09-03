@@ -13,6 +13,11 @@ import {
 import { ResponsesClient } from "../services/ResponsesClient";
 import { SettingsRepository } from "../services/SettingsRepository";
 
+/** 识别由用户停止操作触发的标准请求中止异常。 */
+function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === "AbortError";
+}
+
 /** 组合 UI 所需状态以及领域服务，组件不直接访问 Chrome 和模型 API。 */
 export function useCurioController() {
   const pageService = useMemo(() => new ChromePageService(), []);
@@ -30,6 +35,7 @@ export function useCurioController() {
   const [settings, setSettings] = useState<ModelSettings | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const activeTabIdRef = useRef<number | null>(null);
+  const requestAbortControllerRef = useRef<AbortController | null>(null);
 
   const refreshPage = useCallback(async () => {
     setError("");
@@ -60,7 +66,7 @@ export function useCurioController() {
   );
 
   const submitQuestion = useCallback(
-    async (rawQuestion: string): Promise<boolean> => {
+    async (rawQuestion: string, onAccepted?: () => void): Promise<boolean> => {
       const question = rawQuestion.trim();
       if (!question || sending) return false;
       if (!page || tabId === null) {
@@ -78,6 +84,9 @@ export function useCurioController() {
 
       setError("");
       setSending(true);
+      const requestAbortController = new AbortController();
+      requestAbortControllerRef.current = requestAbortController;
+      onAccepted?.();
       const requestTabId = tabId;
       let history = conversationStore.getRequestHistory(requestTabId);
       const requestMessageCount = conversationStore.getRequestMessageCount(requestTabId);
@@ -106,6 +115,7 @@ export function useCurioController() {
             pageResult.page.text
           );
           if (activeTabIdRef.current === requestTabId) setMessages(thinkingMessages);
+          requestAbortController.signal.throwIfAborted();
         }
 
         const nextInputTokens = estimateNextInputUsage(
@@ -119,7 +129,11 @@ export function useCurioController() {
             "正在压缩上下文…"
           );
           if (activeTabIdRef.current === requestTabId) setMessages(compressingMessages);
-          const summary = await responsesClient.compressHistory(currentSettings, history);
+          const summary = await responsesClient.compressHistory(
+            currentSettings,
+            history,
+            requestAbortController.signal
+          );
           history = conversationStore.compressRequestHistory(
             requestTabId,
             summary,
@@ -146,7 +160,8 @@ export function useCurioController() {
               progress.reasoning
             );
             if (activeTabIdRef.current === requestTabId) setMessages(nextMessages);
-          }
+          },
+          requestAbortController.signal
         );
         conversationStore.updateStreamingAssistant(
           requestTabId,
@@ -160,6 +175,15 @@ export function useCurioController() {
         }
         return true;
       } catch (requestError) {
+        if (requestAbortController.signal.aborted || isAbortError(requestError)) {
+          const nextMessages = conversationStore.stopTurn(requestTabId);
+          if (activeTabIdRef.current === requestTabId) {
+            setMessages(nextMessages);
+            setContextMessages(conversationStore.getRequestHistory(requestTabId));
+            setError("");
+          }
+          return true;
+        }
         const nextMessages = conversationStore.rollbackTurn(requestTabId);
         if (activeTabIdRef.current === requestTabId) {
           setMessages(nextMessages);
@@ -172,11 +196,18 @@ export function useCurioController() {
         }
         return false;
       } finally {
+        if (requestAbortControllerRef.current === requestAbortController) {
+          requestAbortControllerRef.current = null;
+        }
         setSending(false);
       }
     },
     [conversationStore, page, pageService, responsesClient, sending, settingsRepository, tabId]
   );
+
+  const stopGeneration = useCallback(() => {
+    requestAbortControllerRef.current?.abort();
+  }, []);
 
   useEffect(() => {
     void refreshPage();
@@ -195,6 +226,7 @@ export function useCurioController() {
     chrome.tabs.onActivated.addListener(handleActivated);
     chrome.tabs.onUpdated.addListener(handleUpdated);
     return () => {
+      requestAbortControllerRef.current?.abort();
       chrome.tabs.onActivated.removeListener(handleActivated);
       chrome.tabs.onUpdated.removeListener(handleUpdated);
     };
@@ -213,6 +245,7 @@ export function useCurioController() {
     openSettings,
     closeSettings: () => setSettingsOpen(false),
     saveSettings,
+    stopGeneration,
     submitQuestion
   };
 }

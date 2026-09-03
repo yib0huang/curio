@@ -88,7 +88,8 @@ export class ResponsesClient {
   /** 将接近窗口上限的旧对话压缩为可继续携带的事实摘要。 */
   async compressHistory(
     settings: ModelSettings,
-    history: ConversationMessage[]
+    history: ConversationMessage[],
+    signal?: AbortSignal
   ): Promise<string> {
     const input: PromptInputMessage[] = [
       {
@@ -113,7 +114,8 @@ export class ResponsesClient {
         input,
         max_output_tokens: 16_000,
         store: false
-      })
+      }),
+      signal
     });
     const data = (await response.json().catch(() => ({}))) as ResponsesPayload;
     if (!response.ok) {
@@ -130,7 +132,8 @@ export class ResponsesClient {
     page: PageSnapshot,
     history: ConversationMessage[],
     question: string,
-    onProgress: (progress: ResponseProgress) => void
+    onProgress: (progress: ResponseProgress) => void,
+    signal?: AbortSignal
   ): Promise<ResponseProgress> {
     const input = buildResponseInput(page, history, question);
 
@@ -147,7 +150,8 @@ export class ResponsesClient {
         store: false,
         stream: true,
         reasoning: { summary: "auto" }
-      })
+      }),
+      signal
     });
 
     if (!response.ok) {
@@ -208,6 +212,7 @@ export class ResponsesClient {
     };
 
     while (true) {
+      signal?.throwIfAborted();
       const { done, value } = await reader.read();
       buffer += decoder.decode(value, { stream: !done });
       const blocks = buffer.split(/\r?\n\r?\n/);

@@ -6,6 +6,13 @@ interface CompressedContext {
   summary: string;
 }
 
+/** 排除网页快照、生成中的占位消息和没有输出的已停止占位消息。 */
+function isRequestMessage(message: ConversationMessage): boolean {
+  return message.kind !== "page-read"
+    && message.status !== "streaming"
+    && (message.role === "user" || Boolean(message.content.trim()));
+}
+
 /** 在 Side Panel 生命周期内按标签页隔离多轮对话。 */
 export class ConversationStore {
   private readonly conversations = new Map<number, ConversationMessage[]>();
@@ -20,9 +27,7 @@ export class ConversationStore {
   /** 返回下一轮实际发送的历史：未压缩时为全部对话，压缩后为摘要加新增对话。 */
   getRequestHistory(tabId: number | null): ConversationMessage[] {
     if (tabId === null) return [];
-    const messages = (this.conversations.get(tabId) ?? []).filter(
-      (message) => message.kind !== "page-read" && message.status !== "streaming"
-    );
+    const messages = (this.conversations.get(tabId) ?? []).filter(isRequestMessage);
     const compressed = this.compressedContexts.get(tabId);
     if (!compressed) return [...messages];
     return [
@@ -34,9 +39,7 @@ export class ConversationStore {
   /** 返回当前已完成、可发送给模型的原始消息数量，作为压缩边界。 */
   getRequestMessageCount(tabId: number | null): number {
     if (tabId === null) return 0;
-    return (this.conversations.get(tabId) ?? []).filter(
-      (message) => message.kind !== "page-read" && message.status !== "streaming"
-    ).length;
+    return (this.conversations.get(tabId) ?? []).filter(isRequestMessage).length;
   }
 
   /** 用摘要替换指定边界前的模型上下文，但不删除界面中的完整聊天记录。 */
@@ -155,6 +158,22 @@ export class ConversationStore {
         activity: undefined,
         status: "complete",
         elapsedSeconds: Math.max(0, Math.floor((completedAt - startedAt) / 1000))
+      };
+    }
+    return [...messages];
+  }
+
+  /** 用户主动停止时保留已经接收的内容，并冻结本轮耗时。 */
+  stopTurn(tabId: number, stoppedAt = Date.now()): ConversationMessage[] {
+    const messages = this.conversations.get(tabId) ?? [];
+    const assistant = messages.at(-1);
+    if (assistant?.role === "assistant" && assistant.status === "streaming") {
+      const startedAt = assistant.startedAt ?? stoppedAt;
+      messages[messages.length - 1] = {
+        ...assistant,
+        activity: undefined,
+        status: "stopped",
+        elapsedSeconds: Math.max(0, Math.floor((stoppedAt - startedAt) / 1000))
       };
     }
     return [...messages];

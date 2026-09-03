@@ -18,9 +18,10 @@ export function App() {
           messages={controller.contextMessages}
           pageStatus={controller.pageStatus}
           error={controller.error}
-          disabled={controller.sending}
+          sending={controller.sending}
           onRefresh={() => void controller.refreshPage()}
           onOpenSettings={() => void controller.openSettings()}
+          onStop={controller.stopGeneration}
           onSubmit={controller.submitQuestion}
         />
       </main>
