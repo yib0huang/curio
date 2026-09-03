@@ -10,7 +10,7 @@ export function App() {
   return (
     <>
       <main className="app">
-        <MessageList messages={controller.messages} pending={controller.sending} />
+        <MessageList messages={controller.messages} />
         <Composer
           page={controller.page}
           pageStatus={controller.pageStatus}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
   ConversationMessage,
   ModelSettings,
@@ -24,11 +24,13 @@ export function useCurioController() {
   const [sending, setSending] = useState(false);
   const [settings, setSettings] = useState<ModelSettings | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const activeTabIdRef = useRef<number | null>(null);
 
   const refreshPage = useCallback(async () => {
     setError("");
     setPageStatus("正在读取当前网页…");
     const result = await pageService.readActivePage();
+    activeTabIdRef.current = result.tabId;
     setTabId(result.tabId);
     setPage(result.page);
     setPageStatus(result.status);
@@ -70,20 +72,40 @@ export function useCurioController() {
 
       setError("");
       setSending(true);
+      const requestTabId = tabId;
+      const history = conversationStore.get(requestTabId);
+      setMessages(conversationStore.startTurn(requestTabId, question));
       try {
-        const history = conversationStore.get(tabId);
         const answer = await responsesClient.answer(
           currentSettings,
           page,
           history,
-          question
+          question,
+          (progress) => {
+            const nextMessages = conversationStore.updateStreamingAssistant(
+              requestTabId,
+              progress.content,
+              progress.reasoning
+            );
+            if (activeTabIdRef.current === requestTabId) setMessages(nextMessages);
+          }
         );
-        setMessages(conversationStore.appendTurn(tabId, question, answer));
+        conversationStore.updateStreamingAssistant(
+          requestTabId,
+          answer.content,
+          answer.reasoning
+        );
+        const nextMessages = conversationStore.completeTurn(requestTabId);
+        if (activeTabIdRef.current === requestTabId) setMessages(nextMessages);
         return true;
       } catch (requestError) {
-        setError(
-          requestError instanceof Error ? requestError.message : String(requestError)
-        );
+        const nextMessages = conversationStore.rollbackTurn(requestTabId);
+        if (activeTabIdRef.current === requestTabId) setMessages(nextMessages);
+        if (activeTabIdRef.current === requestTabId) {
+          setError(
+            requestError instanceof Error ? requestError.message : String(requestError)
+          );
+        }
         return false;
       } finally {
         setSending(false);

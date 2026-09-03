@@ -18,7 +18,7 @@ override DIST_DIR := dist
 override RELEASE_DIR := release
 override PACKAGE_PREFIX := curio
 
-.PHONY: help doctor install ci-install dev typecheck validate check build rebuild \
+.PHONY: help doctor install ci-install dev typecheck test validate check build rebuild \
 	package package-verify package-list ci clean clean-package clean-deps clean-all version paths
 
 help: ## 显示可用目标及用途（默认目标）
@@ -47,10 +47,13 @@ dev: ## 启动 Vite/CRXJS 开发构建与文件监听
 typecheck: ## 执行严格 TypeScript 类型检查
 	$(NPM) run typecheck
 
+test: ## 运行协议、计时交互和会话隔离自动化测试
+	$(NPM) test
+
 validate: ## 校验 Manifest、资源引用和版本一致性
 	$(NODE) scripts/validate.mjs
 
-check: ## 执行提交前完整静态检查
+check: ## 执行提交前类型、测试和工程检查
 	$(NPM) run check
 
 build: ## 完成检查并生成可加载的 dist 扩展目录

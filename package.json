@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "vite",
     "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck && node scripts/validate.mjs",
+    "test": "vitest run",
+    "check": "npm run typecheck && npm test && node scripts/validate.mjs",
     "build": "npm run check && vite build",
     "package": "npm run build && sh scripts/package.sh"
   },
@@ -16,15 +17,21 @@
   },
   "dependencies": {
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.7.1",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.3",
     "@types/chrome": "^0.2.8",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",
     "@vitejs/plugin-react": "^6.1.1",
+    "jsdom": "^28.1.0",
     "typescript": "^7.0.2",
-    "vite": "^8.2.2"
+    "vite": "^8.2.2",
+    "vitest": "^4.1.11"
   }
 }

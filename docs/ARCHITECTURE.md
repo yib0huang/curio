@@ -32,11 +32,12 @@ Curio 是一个使用 React、TypeScript、Vite 和 CRXJS 构建的纯客户端 
 Side Panel 使用分层的 React + TypeScript 结构：
 
 - `components/`：展示页面、消息、输入框和设置对话框。
+- `components/MarkdownContent.tsx`：安全渲染模型 Markdown，禁用原始 HTML 和远程图片。
 - `hooks/useCurioController.ts`：组合 UI 状态和业务流程，不实现具体协议。
 - `services/ChromePageService.ts`：活动标签页和内容脚本通信。
 - `services/ConversationStore.ts`：按 `tabId` 隔离内存会话。
 - `services/SettingsRepository.ts`：封装 `chrome.storage.local`。
-- `services/ResponsesClient.ts`：封装不可信网页上下文和 Responses API 协议。
+- `services/ResponsesClient.ts`：封装不可信网页上下文和 Responses API SSE 协议，分离推理摘要与最终输出事件。
 - `shared/types.ts`：Content Script 与 Side Panel 共享的消息及领域类型。
 
 ## 数据流
@@ -60,7 +61,7 @@ page-reader.ts ──页面快照──▶ ChromePageService
 ## 状态生命周期
 
 - 页面快照：保存在 Side Panel 页面内存中，切换或刷新标签页时更新。
-- 对话历史：保存在 Side Panel 页面内存的 `Map<tabId, messages>` 中；关闭 Side Panel 后不保证保留。
+- 对话历史：保存在 Side Panel 页面内存的 `Map<tabId, messages>` 中；流式生成期间持续更新当前助手消息，关闭 Side Panel 后不保证保留。
 - API 设置：保存在 `chrome.storage.local` 中，直到用户修改或清除扩展数据。
 
 ## 已知架构限制
@@ -68,4 +69,4 @@ page-reader.ts ──页面快照──▶ ChromePageService
 - SPA 页面内容变化不会始终自动触发重新提取，用户可手动刷新页面快照。
 - 纯客户端 API Key 不适合面向公众发布。
 - 当前正文提取是通用启发式实现，不等同于完整 Readability 算法。
-- 会话没有跨浏览器重启持久化，也没有流式输出。
+- 会话没有跨浏览器重启持久化。

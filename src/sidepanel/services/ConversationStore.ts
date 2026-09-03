@@ -10,14 +10,58 @@ export class ConversationStore {
     return [...(this.conversations.get(tabId) ?? [])];
   }
 
-  /** 将一轮完整问答追加到指定标签页。 */
-  appendTurn(tabId: number, question: string, answer: string): ConversationMessage[] {
+  /** 追加问题和一个空的助手消息，供流式响应持续更新。 */
+  startTurn(
+    tabId: number,
+    question: string,
+    startedAt = Date.now()
+  ): ConversationMessage[] {
     const messages = this.conversations.get(tabId) ?? [];
     messages.push(
       { role: "user", content: question },
-      { role: "assistant", content: answer }
+      { role: "assistant", content: "", status: "streaming", startedAt }
     );
     this.conversations.set(tabId, messages);
+    return [...messages];
+  }
+
+  /** 用当前已接收的完整快照更新正在生成的助手消息。 */
+  updateStreamingAssistant(
+    tabId: number,
+    content: string,
+    reasoning: string
+  ): ConversationMessage[] {
+    const messages = this.conversations.get(tabId) ?? [];
+    const assistant = messages.at(-1);
+    if (assistant?.role === "assistant" && assistant.status === "streaming") {
+      messages[messages.length - 1] = {
+        ...assistant,
+        content,
+        reasoning
+      };
+    }
+    return [...messages];
+  }
+
+  /** 将流式助手消息标记为完成，使思考摘要默认收起。 */
+  completeTurn(tabId: number, completedAt = Date.now()): ConversationMessage[] {
+    const messages = this.conversations.get(tabId) ?? [];
+    const assistant = messages.at(-1);
+    if (assistant?.role === "assistant" && assistant.status === "streaming") {
+      const startedAt = assistant.startedAt ?? completedAt;
+      messages[messages.length - 1] = {
+        ...assistant,
+        status: "complete",
+        elapsedSeconds: Math.max(0, Math.floor((completedAt - startedAt) / 1000))
+      };
+    }
+    return [...messages];
+  }
+
+  /** 请求失败时移除尚未完成的一问一答，保持历史可再次提交。 */
+  rollbackTurn(tabId: number): ConversationMessage[] {
+    const messages = this.conversations.get(tabId) ?? [];
+    if (messages.at(-1)?.status === "streaming") messages.splice(-2, 2);
     return [...messages];
   }
 }

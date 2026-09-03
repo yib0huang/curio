@@ -8,6 +8,8 @@ Curio 是一个 Chrome Side Panel 扩展：读取当前标签页的正文，并�
 - 提取当前网页标题、URL、描述和 Markdown 风格的结构化正文，并过滤常见页面噪声。
 - 一键复制当前已提取的正文，方便检查读取结果。
 - 围绕网页上下文进行按标签页隔离的多轮对话。
+- 流式展示模型回答，并将模型提供的思考摘要默认折叠在最终回答上方。
+- 使用安全的 Markdown 排版展示标题、列表、引用、代码和表格等回答内容。
 - 支持配置 Responses API 地址、API Key 和模型。
 - 对网页提示词注入、输出渲染和请求存储采取基础防护。
 
@@ -38,7 +40,7 @@ make package
 - `make help`：列出全部目标、用途和可覆盖变量。
 - `make doctor`：检查 Node.js、npm、`zip` 和 `unzip` 环境。
 - `make dev`：启动 Vite/CRXJS 开发构建和文件监听。
-- `make check`：执行 TypeScript 类型检查以及 Manifest、资源和版本校验。
+- `make check`：执行 TypeScript 类型检查、自动化测试以及 Manifest、资源和版本校验。
 - `make build`：完成检查并生成可由 Chrome 加载的 `dist/` 目录。
 - `make package`：构建 `release/curio-<version>.zip`，校验归档完整性和根级 Manifest，并输出文件清单。
 - `make ci`：按锁文件安装依赖，并执行 CI 所需的检查、构建和打包。
@@ -48,12 +50,14 @@ make package
 ```bash
 npm install
 npm run dev
+npm test
 npm run check
 npm run build
 npm run package
 ```
 
 - `npm run dev`：等价于 `make dev`。
+- `npm test`：运行流式协议、计时交互和会话隔离自动化测试。
 - `npm run check`：等价于 `make check`。
 - `npm run build`：等价于 `make build`。
 - `npm run package`：完成构建并生成发布包；`make package` 会额外列出 ZIP 内容。
