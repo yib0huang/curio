@@ -71,18 +71,18 @@ button { cursor: pointer; }
 .markdown-body input[type="checkbox"] { margin: 0 6px 0 0; accent-color: #6554d9; }
 .assistant-output { min-width: 0; }
 .reasoning { margin-bottom: 10px; color: #77756f; font-size: 13px; }
-.reasoning summary { display: flex; align-items: center; gap: 6px; width: fit-content; cursor: pointer; list-style: none; user-select: none; }
+.reasoning summary { display: flex; align-items: center; gap: 7px; width: fit-content; cursor: pointer; list-style: none; user-select: none; }
 .reasoning summary::-webkit-details-marker { display: none; }
-.reasoning summary::after { content: ""; flex: 0 0 auto; width: 6px; height: 6px; margin-left: 2px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: translateY(-1px) rotate(-45deg); transform-origin: center; transition: transform .15s ease; }
-.reasoning[open] summary::after { transform: translateY(-2px) rotate(45deg); }
+.reasoning summary::after, .page-read summary::after { content: ""; flex: 0 0 auto; width: 5px; height: 5px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: translateY(-1px) rotate(-45deg); transform-origin: center; transition: transform .15s ease; }
+.reasoning summary::after { margin-left: 1px; }
+.reasoning[open] summary::after, .page-read[open] summary::after { transform: translateY(-2px) rotate(45deg); }
 .reasoning-content { margin-top: 7px; padding-left: 12px; border-left: 2px solid #d9d6ce; }
 .reasoning-status { margin-bottom: 10px; color: #77756f; font-size: 13px; }
 .page-read { width: 100%; overflow: hidden; border: 1px solid #dfe8ea; border-radius: 12px; background: #f8fbfb; color: #6e7b82; font-size: 13px; }
-.page-read summary { display: flex; align-items: center; gap: 9px; min-height: 44px; padding: 7px 11px; cursor: pointer; list-style: none; user-select: none; transition: background .15s ease; }
+.page-read summary { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 7px 11px; cursor: pointer; list-style: none; user-select: none; transition: background .15s ease; }
 .page-read summary:hover { background: #f0f6f7; }
 .page-read summary::-webkit-details-marker { display: none; }
-.page-read summary::after { content: ""; flex: 0 0 auto; width: 7px; height: 7px; margin: 0 3px 0 2px; border-right: 1.5px solid #99968f; border-bottom: 1.5px solid #99968f; transform: rotate(-45deg); transform-origin: center; transition: transform .15s ease; }
-.page-read[open] summary::after { transform: rotate(45deg); }
+.page-read summary::after { margin: 0 2px 0 3px; color: #99968f; }
 .page-read-icon { display: grid; flex: 0 0 27px; place-items: center; width: 27px; height: 27px; border-radius: 8px; background: #e8f0f2; color: #6f7d84; }
 .page-read-icon svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .page-read.streaming .page-read-icon { animation: page-read-pulse 1.5s ease-in-out infinite; }
@@ -109,6 +109,9 @@ button { cursor: pointer; }
 .composer > button { display: grid; flex: 0 0 auto; place-items: center; width: 34px; height: 34px; margin: 3px; padding: 0; border: 0; border-radius: 50%; background: #6554d9; color: white; transition: background .15s ease, transform .15s ease, opacity .15s ease; }
 .composer > button:hover:not(:disabled) { background: #5948ca; transform: translateY(-1px); }
 .composer > button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.composer > button.stop-generation { background: #55545a; }
+.composer > button.stop-generation:hover { background: #45444a; }
+.stop-generation-icon { fill: currentColor; stroke: none; }
 .composer button:disabled { cursor: not-allowed; opacity: .45; }
 .context-usage { flex: 0 0 auto; margin: 3px 0; }
 .context-usage-trigger { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%; background: #edf2f3; color: #738087; }
@@ -164,6 +167,8 @@ dialog::backdrop { background: rgba(20, 18, 14, .35); }
   .composer { background: #292927; border-color: #41413c; color: #e6e5e0; }
   .composer-wrap { background: #182024; }
   .composer textarea { color: #eee; }
+  .composer > button.stop-generation { background: #d7d5ce; color: #292927; }
+  .composer > button.stop-generation:hover { background: #ebe9e2; }
   .page-meta { color: #aaa79f; }
   .reasoning, .reasoning-status { color: #aaa79f; }
   .reasoning-content { border-left-color: #4a4944; }

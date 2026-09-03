@@ -11,6 +11,7 @@ interface ReasoningBlockProps {
   elapsedSeconds?: number;
   reasoning: string;
   startedAt?: number;
+  stopped: boolean;
   streaming: boolean;
 }
 
@@ -47,14 +48,17 @@ function ReasoningBlock({
   elapsedSeconds,
   reasoning,
   startedAt,
+  stopped,
   streaming
 }: ReasoningBlockProps) {
   const runningSeconds = useElapsedSeconds(streaming, startedAt);
-  const statusText = streaming
-    ? activity || (runningSeconds === 0
-      ? "思考中…"
-      : `已处理 ${formatElapsedTime(runningSeconds)}`)
-    : `用时 ${formatElapsedTime(elapsedSeconds ?? 0)}`;
+  const statusText = stopped
+    ? `已停止 · ${formatElapsedTime(elapsedSeconds ?? 0)}`
+    : streaming
+      ? activity || (runningSeconds === 0
+        ? "思考中…"
+        : `已处理 ${formatElapsedTime(runningSeconds)}`)
+      : `用时 ${formatElapsedTime(elapsedSeconds ?? 0)}`;
 
   if (!streaming && !reasoning) {
     return <div className="reasoning-status">{statusText}</div>;
@@ -73,9 +77,10 @@ function ReasoningBlock({
 /** 独立展示首问所使用的网页快照，避免与模型推理混在同一条消息中。 */
 function PageReadBlock({ message }: PageReadBlockProps) {
   const streaming = message.status === "streaming";
+  const stopped = message.status === "stopped";
 
   return (
-    <details className={`page-read ${streaming ? "streaming" : "complete"}`}>
+    <details className={`page-read ${streaming ? "streaming" : stopped ? "stopped" : "complete"}`}>
       <summary>
         <span className="page-read-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24">
@@ -84,7 +89,11 @@ function PageReadBlock({ message }: PageReadBlockProps) {
           </svg>
         </span>
         <span className="page-read-title">
-          {streaming ? message.activity || "正在读取网页…" : "网页内容已读取"}
+          {streaming
+            ? message.activity || "正在读取网页…"
+            : stopped
+              ? "已停止读取网页"
+              : "网页内容已读取"}
         </span>
         {!streaming && (
           <span className="page-read-meta">
@@ -176,13 +185,18 @@ function MessageCopyButton({
 export function MessageList({ messages }: MessageListProps) {
   const containerRef = useRef<HTMLElement>(null);
   const shouldAutoScrollRef = useRef(true);
+  const previousUserMessageCountRef = useRef(0);
+  const userMessageCount = messages.filter((message) => message.role === "user").length;
 
   useEffect(() => {
     const container = containerRef.current;
-    if (container && shouldAutoScrollRef.current) {
+    const hasNewUserMessage = userMessageCount > previousUserMessageCountRef.current;
+    if (hasNewUserMessage) shouldAutoScrollRef.current = true;
+    if (container && (hasNewUserMessage || shouldAutoScrollRef.current)) {
       container.scrollTop = container.scrollHeight;
     }
-  }, [messages]);
+    previousUserMessageCountRef.current = userMessageCount;
+  }, [messages, userMessageCount]);
 
   if (messages.length === 0) return null;
 
@@ -213,6 +227,7 @@ export function MessageList({ messages }: MessageListProps) {
                     elapsedSeconds={message.elapsedSeconds}
                     reasoning={message.reasoning ?? ""}
                     startedAt={message.startedAt}
+                    stopped={message.status === "stopped"}
                     streaming={message.status === "streaming"}
                   />
                 )}
@@ -222,7 +237,7 @@ export function MessageList({ messages }: MessageListProps) {
                       {message.content}
                     </MarkdownContent>
                     <div className="message-actions">
-                      {message.status === "complete" && (
+                      {message.status !== "streaming" && (
                         <MessageCopyButton
                           content={message.content}
                           label="复制回答"

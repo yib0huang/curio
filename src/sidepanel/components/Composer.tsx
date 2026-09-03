@@ -11,10 +11,11 @@ interface ComposerProps {
   messages: ConversationMessage[];
   pageStatus: string;
   error: string;
-  disabled: boolean;
+  sending: boolean;
   onRefresh: () => void;
   onOpenSettings: () => void;
-  onSubmit: (question: string) => Promise<boolean>;
+  onStop: () => void;
+  onSubmit: (question: string, onAccepted?: () => void) => Promise<boolean>;
 }
 
 /** 以紧凑形式展示 1M 上下文窗口的占用比例。 */
@@ -30,9 +31,10 @@ export function Composer({
   messages,
   pageStatus,
   error,
-  disabled,
+  sending,
   onRefresh,
   onOpenSettings,
+  onStop,
   onSubmit
 }: ComposerProps) {
   const [question, setQuestion] = useState("");
@@ -68,7 +70,15 @@ export function Composer({
 
   const submit = async (event?: FormEvent) => {
     event?.preventDefault();
-    if (await onSubmit(question)) setQuestion("");
+    const submittedQuestion = question;
+    let accepted = false;
+    const succeeded = await onSubmit(submittedQuestion, () => {
+      accepted = true;
+      setQuestion((current) => current === submittedQuestion ? "" : current);
+    });
+    if (!succeeded && accepted) {
+      setQuestion((current) => current || submittedQuestion);
+    }
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -88,7 +98,7 @@ export function Composer({
           placeholder="关于这个页面，想问什么？"
           aria-label="问题"
           value={question}
-          disabled={disabled}
+          disabled={sending}
           onChange={(event) => setQuestion(event.target.value)}
           onKeyDown={handleKeyDown}
         />
@@ -153,9 +163,20 @@ export function Composer({
             </div>
           )}
         </div>
-        <button type="submit" aria-label="发送" disabled={disabled || !question.trim()}>
+        <button
+          type={sending ? "button" : "submit"}
+          className={sending ? "stop-generation" : undefined}
+          title={sending ? "停止生成" : "发送"}
+          aria-label={sending ? "停止生成" : "发送"}
+          disabled={!sending && !question.trim()}
+          onClick={sending ? onStop : undefined}
+        >
           <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 19V5M6.5 10.5 12 5l5.5 5.5" />
+            {sending ? (
+              <rect className="stop-generation-icon" x="7" y="7" width="10" height="10" rx="2" />
+            ) : (
+              <path d="M12 19V5M6.5 10.5 12 5l5.5 5.5" />
+            )}
           </svg>
         </button>
       </form>

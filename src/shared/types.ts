@@ -42,8 +42,8 @@ export interface ConversationMessage {
   activity?: string;
   /** 模型提供的推理摘要；它与面向用户的最终回答分开展示。 */
   reasoning?: string;
-  /** 仅用于标记正在接收增量内容的临时助手消息。 */
-  status?: "streaming" | "complete";
+  /** 标记助手消息仍在生成、已完整生成或被用户主动停止。 */
+  status?: "streaming" | "complete" | "stopped";
   /** 本轮请求开始时间，用于显示真实经过时间。 */
   startedAt?: number;
   /** 请求完成时冻结的总耗时，避免历史消息继续计时。 */

@@ -179,4 +179,52 @@ describe("MessageList", () => {
     expect(screen.getByText("用时 12秒")).toBeTruthy();
     expect(document.querySelector("details")).toBeNull();
   });
+
+  it("主动停止后保留部分回答并显示停止状态", () => {
+    render(
+      <MessageList
+        messages={[{
+          role: "assistant",
+          content: "已经生成的部分回答",
+          status: "stopped",
+          elapsedSeconds: 6
+        }]}
+      />
+    );
+
+    expect(screen.getByText("已停止 · 6秒")).toBeTruthy();
+    expect(screen.getByText("已经生成的部分回答")).toBeTruthy();
+    expect(screen.getByLabelText("复制回答")).toBeTruthy();
+  });
+
+  it("用户发送新问题时即使此前向上滚动也会回到底部", () => {
+    const view = render(
+      <MessageList
+        messages={[
+          { role: "user", content: "旧问题" },
+          { role: "assistant", content: "旧回答", status: "complete" }
+        ]}
+      />
+    );
+    const container = document.querySelector(".messages") as HTMLElement;
+    Object.defineProperties(container, {
+      clientHeight: { configurable: true, value: 300 },
+      scrollHeight: { configurable: true, value: 1_000 }
+    });
+    container.scrollTop = 100;
+    fireEvent.scroll(container);
+
+    view.rerender(
+      <MessageList
+        messages={[
+          { role: "user", content: "旧问题" },
+          { role: "assistant", content: "旧回答", status: "complete" },
+          { role: "user", content: "新问题" },
+          { role: "assistant", content: "", status: "streaming" }
+        ]}
+      />
+    );
+
+    expect(container.scrollTop).toBe(1_000);
+  });
 });

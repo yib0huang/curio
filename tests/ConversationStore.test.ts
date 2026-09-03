@@ -31,6 +31,26 @@ describe("ConversationStore", () => {
     expect(store.rollbackTurn(1)).toEqual([]);
   });
 
+  it("主动停止时保留已生成内容并排除空回答占位", () => {
+    const store = new ConversationStore();
+    store.startTurn(1, "保留的问题", 1_000);
+    store.updateStreamingAssistant(1, "已经生成的部分", "");
+    store.stopTurn(1, 4_900);
+
+    expect(store.get(1).at(-1)).toMatchObject({
+      content: "已经生成的部分",
+      status: "stopped",
+      elapsedSeconds: 3
+    });
+    expect(store.getRequestHistory(1)).toHaveLength(2);
+
+    store.startTurn(2, "没有输出的问题", 1_000);
+    store.stopTurn(2, 2_000);
+    expect(store.getRequestHistory(2).map((message) => message.content)).toEqual([
+      "没有输出的问题"
+    ]);
+  });
+
   it("把网页读取记录和模型回答拆成两条助手消息", () => {
     const store = new ConversationStore();
     store.startPageReadTurn(1, "概括文档", "当前已读取内容", 1_000);
