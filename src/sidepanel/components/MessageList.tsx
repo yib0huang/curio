@@ -222,11 +222,13 @@ export function MessageList({ messages }: MessageListProps) {
                       {message.content}
                     </MarkdownContent>
                     <div className="message-actions">
-                      <MessageCopyButton
-                        content={message.content}
-                        label="复制回答"
-                        successLabel="回答已复制"
-                      />
+                      {message.status === "complete" && (
+                        <MessageCopyButton
+                          content={message.content}
+                          label="复制回答"
+                          successLabel="回答已复制"
+                        />
+                      )}
                     </div>
                   </>
                 )}

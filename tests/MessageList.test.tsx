@@ -114,6 +114,32 @@ describe("MessageList", () => {
     expect(screen.getByLabelText("复制回答")).toBeTruthy();
   });
 
+  it("流式生成时隐藏复制按钮，完成后再显示", () => {
+    const view = render(
+      <MessageList
+        messages={[{
+          role: "assistant",
+          content: "正在生成",
+          status: "streaming"
+        }]}
+      />
+    );
+
+    expect(screen.queryByLabelText("复制回答")).toBeNull();
+
+    view.rerender(
+      <MessageList
+        messages={[{
+          role: "assistant",
+          content: "生成完成",
+          status: "complete"
+        }]}
+      />
+    );
+
+    expect(screen.getByLabelText("复制回答")).toBeTruthy();
+  });
+
   it("完成后冻结总用时且保持默认收起", () => {
     render(
       <MessageList

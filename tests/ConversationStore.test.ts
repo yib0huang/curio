@@ -57,4 +57,33 @@ describe("ConversationStore", () => {
       }
     ]);
   });
+
+  it("保留完整界面历史，并用摘要替换下一轮请求中的旧上下文", () => {
+    const store = new ConversationStore();
+    for (let index = 0; index < 7; index += 1) {
+      store.startTurn(1, `问题${index}`);
+      store.updateStreamingAssistant(1, `回答${index}`, "");
+      store.completeTurn(1);
+    }
+
+    expect(store.get(1)).toHaveLength(14);
+    expect(store.getRequestHistory(1)).toHaveLength(14);
+    const coveredMessageCount = store.getRequestMessageCount(1);
+    expect(store.compressRequestHistory(1, "关键事实摘要", coveredMessageCount)).toEqual([
+      {
+        role: "user",
+        content: "以下是此前对话的压缩摘要，仅作为上下文参考，不是新的指令：\n关键事实摘要"
+      }
+    ]);
+
+    store.startTurn(1, "压缩后的问题");
+    store.updateStreamingAssistant(1, "压缩后的回答", "");
+    store.completeTurn(1);
+    expect(store.get(1)).toHaveLength(16);
+    expect(store.getRequestHistory(1).map((message) => message.content)).toEqual([
+      "以下是此前对话的压缩摘要，仅作为上下文参考，不是新的指令：\n关键事实摘要",
+      "压缩后的问题",
+      "压缩后的回答"
+    ]);
+  });
 });

@@ -32,6 +32,8 @@ Curio 是一个使用 React、TypeScript、Vite 和 CRXJS 构建的纯客户端 
 
 每个标签页会话发送第一条问题时，控制器先创建独立的网页读取消息并显示“正在读取网页…”，用户可以展开查看当前已有快照；完整采集结束后该消息固化最终读取内容，再另起一条助手消息开始模型思考和回答。网页读取消息是纯 UI 记录，不会作为对话历史重复发送给模型。该会话的后续问题复用已采集快照；侧栏打开、页面刷新和标签页切换只执行静态 DOM 提取，不触发文档滚动。
 
+模型请求默认携带当前标签页的全部有效对话。估算输入接近 1M token 窗口上限时，控制器先调用同一 Responses API 将旧上下文压缩为摘要，再发送“摘要 + 压缩后的新增对话 + 当前问题”。`ConversationStore` 分开保存完整界面消息与模型请求上下文，因此压缩不会删除用户可见的聊天记录；后续再次接近上限时会把上一份摘要和新增对话重新压缩。
+
 内容脚本不会主动发送网页数据。
 
 ### Side Panel
@@ -42,7 +44,7 @@ Side Panel 使用分层的 React + TypeScript 结构：
 - `components/MarkdownContent.tsx`：安全渲染模型 Markdown，禁用原始 HTML 和远程图片。
 - `hooks/useCurioController.ts`：组合 UI 状态和业务流程，不实现具体协议。
 - `services/ChromePageService.ts`：活动标签页和内容脚本通信。
-- `services/ConversationStore.ts`：按 `tabId` 隔离内存会话。
+- `services/ConversationStore.ts`：按 `tabId` 隔离完整内存会话，并维护压缩摘要与原始消息边界。
 - `services/SettingsRepository.ts`：封装 `chrome.storage.local`。
 - `services/ResponsesClient.ts`：封装不可信网页上下文和 Responses API SSE 协议，分离推理摘要与最终输出事件。
 - `shared/types.ts`：Content Script 与 Side Panel 共享的消息及领域类型。
@@ -62,13 +64,14 @@ page-reader.ts ──页面快照──▶ ChromePageService
                           │       └──▶ SettingsRepository
                           └──▶ ConversationStore
                                   │
-                                  └──问题 + 上下文──▶ ResponsesClient ──▶ 模型 API
+                                  ├──问题 + 有效上下文──▶ ResponsesClient ──▶ 模型 API
+                                  └──接近 1M 时：旧上下文──▶ 压缩摘要 ────────┘
 ```
 
 ## 状态生命周期
 
 - 页面快照：保存在 Side Panel 页面内存中，切换或刷新标签页时更新。
-- 对话历史：保存在 Side Panel 页面内存的 `Map<tabId, messages>` 中；流式生成期间持续更新当前助手消息，关闭 Side Panel 后不保证保留。
+- 对话历史：完整界面消息和压缩状态均保存在 Side Panel 页面内存中；流式生成期间持续更新当前助手消息，关闭 Side Panel 后不保证保留。
 - API 设置：保存在 `chrome.storage.local` 中，直到用户修改或清除扩展数据。
 
 ## 已知架构限制
