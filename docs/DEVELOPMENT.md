@@ -18,15 +18,16 @@ make build
 - `make doctor`：检查本地构建和打包工具。
 - `make dev`：启动监听构建；源码变化后在扩展页重新加载。
 - `make typecheck`：执行严格 TypeScript 类型检查。
+- `make test`：运行流式协议、计时交互和会话隔离自动化测试。
 - `make validate`：单独执行 Manifest、资源和版本检查。
-- `make check`：执行完整静态检查。
+- `make check`：执行类型检查、自动化测试和工程校验。
 - `make build`：完成检查并生成 `dist/` 可加载扩展。
 - `make rebuild`：清理 `dist/` 后重新构建。
 - `make package`：生成 `release/curio-<version>.zip`，校验完整性和根级 Manifest，并列出文件清单。
 - `make ci`：通过 `npm ci` 完成可复现安装，并运行检查、构建和打包。
 - `make clean`、`make clean-package`、`make clean-deps`：分别清理构建目录、发布目录和依赖目录。
 
-Makefile 是现有 npm 脚本的编排层；不使用 Make 时仍可直接运行 `npm run dev`、`npm run check`、`npm run build` 和 `npm run package`。Node.js、npm 与 unzip 路径可通过命令行变量覆盖，例如 `make build NPM=/opt/node/bin/npm`。输出目录保持为项目约定的 `dist/` 和 `release/`，避免清理命令误删意外路径。
+Makefile 是现有 npm 脚本的编排层；不使用 Make 时仍可直接运行 `npm run dev`、`npm test`、`npm run check`、`npm run build` 和 `npm run package`。Node.js、npm 与 unzip 路径可通过命令行变量覆盖，例如 `make build NPM=/opt/node/bin/npm`。输出目录保持为项目约定的 `dist/` 和 `release/`，避免清理命令误删意外路径。
 
 ## 代码与注释要点
 

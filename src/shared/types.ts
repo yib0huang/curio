@@ -22,6 +22,14 @@ export interface ModelSettings {
 export interface ConversationMessage {
   role: "user" | "assistant";
   content: string;
+  /** 模型提供的推理摘要；它与面向用户的最终回答分开展示。 */
+  reasoning?: string;
+  /** 仅用于标记正在接收增量内容的临时助手消息。 */
+  status?: "streaming" | "complete";
+  /** 本轮请求开始时间，用于显示真实经过时间。 */
+  startedAt?: number;
+  /** 请求完成时冻结的总耗时，避免历史消息继续计时。 */
+  elapsedSeconds?: number;
 }
 
 /** 内容脚本支持的读取页面消息。 */
