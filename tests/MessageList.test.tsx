@@ -121,12 +121,18 @@ describe("MessageList", () => {
           role: "assistant",
           content: "正在生成",
           status: "streaming",
-          outputTokens: 4
+          tokenUsage: {
+            inputTokens: 100,
+            cachedInputTokens: 20,
+            outputTokens: 30,
+            reasoningTokens: 10,
+            totalTokens: 130
+          }
         }]}
       />
     );
 
-    expect(screen.queryByText("4 tokens")).toBeNull();
+    expect(screen.queryByText("20 tokens")).toBeNull();
     expect(screen.queryByLabelText("复制回答")).toBeNull();
 
     view.rerender(
@@ -135,13 +141,35 @@ describe("MessageList", () => {
           role: "assistant",
           content: "生成完成",
           status: "complete",
-          outputTokens: 9
+          tokenUsage: {
+            inputTokens: 100,
+            cachedInputTokens: 20,
+            outputTokens: 30,
+            reasoningTokens: 10,
+            totalTokens: 130
+          }
         }]}
       />
     );
 
-    expect(screen.getByText("9 tokens")).toBeTruthy();
+    const usageSummary = screen.getByText("20 tokens");
+    expect(usageSummary).toBeTruthy();
     expect(screen.getByLabelText("复制回答")).toBeTruthy();
+    fireEvent.click(usageSummary);
+    expect(screen.getByText("本轮 Token 用量")).toBeTruthy();
+    expect(screen.getByText("共 130")).toBeTruthy();
+    expect(document.querySelector(".token-usage-popover")?.textContent).toContain(
+      "输入（未缓存）80"
+    );
+    expect(document.querySelector(".token-usage-popover")?.textContent).toContain(
+      "输入（缓存）20"
+    );
+    expect(document.querySelector(".token-usage-popover")?.textContent).toContain("推理10");
+    expect(document.querySelector(".token-usage-popover")?.textContent).toContain(
+      "可见回答20"
+    );
+    fireEvent.click(screen.getByLabelText("关闭 Token 用量"));
+    expect(screen.queryByText("本轮 Token 用量")).toBeNull();
   });
 
   it("完成后冻结总用时且保持默认收起", () => {

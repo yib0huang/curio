@@ -111,7 +111,7 @@ export function useCurioController() {
               requestTabId,
               progress.content,
               progress.reasoning,
-              progress.outputTokens
+              progress.tokenUsage
             );
             if (activeTabIdRef.current === requestTabId) setMessages(nextMessages);
           }
@@ -120,7 +120,7 @@ export function useCurioController() {
           requestTabId,
           answer.content,
           answer.reasoning,
-          answer.outputTokens
+          answer.tokenUsage
         );
         const nextMessages = conversationStore.completeTurn(requestTabId);
         if (activeTabIdRef.current === requestTabId) setMessages(nextMessages);

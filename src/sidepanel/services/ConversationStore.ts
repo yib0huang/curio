@@ -1,4 +1,4 @@
-import type { ConversationMessage } from "../../shared/types";
+import type { ConversationMessage, TokenUsage } from "../../shared/types";
 
 /** 在 Side Panel 生命周期内按标签页隔离多轮对话。 */
 export class ConversationStore {
@@ -82,7 +82,7 @@ export class ConversationStore {
     tabId: number,
     content: string,
     reasoning: string,
-    outputTokens?: number
+    tokenUsage?: TokenUsage
   ): ConversationMessage[] {
     const messages = this.conversations.get(tabId) ?? [];
     const assistant = messages.at(-1);
@@ -91,7 +91,7 @@ export class ConversationStore {
         ...assistant,
         content,
         reasoning,
-        ...(outputTokens === undefined ? {} : { outputTokens })
+        ...(tokenUsage === undefined ? {} : { tokenUsage })
       };
     }
     return [...messages];

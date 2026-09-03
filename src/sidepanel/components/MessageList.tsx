@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { ConversationMessage } from "../../shared/types";
+import type { ConversationMessage, TokenUsage } from "../../shared/types";
 import { MarkdownContent } from "./MarkdownContent";
 
 interface MessageListProps {
@@ -16,6 +16,10 @@ interface ReasoningBlockProps {
 
 interface PageReadBlockProps {
   message: ConversationMessage;
+}
+
+interface TokenUsageDetailsProps {
+  usage: TokenUsage;
 }
 
 /** 将秒数格式化为与 Codex 状态行一致的中文时长。 */
@@ -172,6 +176,74 @@ function MessageCopyButton({
   );
 }
 
+/** 将 API 返回的本轮 usage 展开为互不重叠的 token 分布。 */
+function TokenUsageDetails({ usage }: TokenUsageDetailsProps) {
+  const [open, setOpen] = useState(false);
+  const freshInputTokens = Math.max(0, usage.inputTokens - usage.cachedInputTokens);
+  const answerTokens = Math.max(0, usage.outputTokens - usage.reasoningTokens);
+  const segments = [
+    { className: "fresh-input", label: "输入（未缓存）", value: freshInputTokens },
+    { className: "cached-input", label: "输入（缓存）", value: usage.cachedInputTokens },
+    { className: "reasoning-output", label: "推理", value: usage.reasoningTokens },
+    { className: "answer-output", label: "可见回答", value: answerTokens }
+  ];
+  const distributionTotal = Math.max(
+    1,
+    segments.reduce((total, segment) => total + segment.value, 0)
+  );
+
+  return (
+    <div className="token-usage">
+      <button
+        className="token-usage-trigger"
+        type="button"
+        title="查看本轮 token 分布"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <span className="token-spark" aria-hidden="true">✦</span>
+        {answerTokens.toLocaleString()} tokens
+      </button>
+      {open && (
+        <div className="token-usage-popover" role="dialog" aria-label="本轮 Token 用量">
+          <div className="token-usage-header">
+            <strong>本轮 Token 用量</strong>
+            <span>共 {usage.totalTokens.toLocaleString()}</span>
+            <button
+              className="token-usage-close"
+              type="button"
+              aria-label="关闭 Token 用量"
+              onClick={() => setOpen(false)}
+            >
+              ×
+            </button>
+          </div>
+          <div className="token-usage-bar" aria-hidden="true">
+            {segments.filter((segment) => segment.value > 0).map((segment) => (
+              <span
+                className={segment.className}
+                key={segment.className}
+                style={{ width: `${(segment.value / distributionTotal) * 100}%` }}
+              />
+            ))}
+          </div>
+          <dl className="token-usage-list">
+            {segments.map((segment) => (
+              <div key={segment.className}>
+                <dt>
+                  <span className={`token-usage-dot ${segment.className}`} aria-hidden="true" />
+                  {segment.label}
+                </dt>
+                <dd>{segment.value.toLocaleString()}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** 以纯文本渲染多轮对话，并在新增内容后滚动到底部。 */
 export function MessageList({ messages }: MessageListProps) {
   const containerRef = useRef<HTMLElement>(null);
@@ -229,14 +301,8 @@ export function MessageList({ messages }: MessageListProps) {
                           successLabel="回答已复制"
                         />
                       )}
-                      {message.status === "complete" && message.outputTokens !== undefined && message.outputTokens > 0 && (
-                        <span
-                          className="token-count"
-                          title="本次回答的 output token 数"
-                        >
-                          <span className="token-spark" aria-hidden="true">✦</span>
-                          {message.outputTokens.toLocaleString()} tokens
-                        </span>
+                      {message.status === "complete" && message.tokenUsage && (
+                        <TokenUsageDetails usage={message.tokenUsage} />
                       )}
                     </div>
                   </>

@@ -67,7 +67,13 @@ describe("ResponsesClient", () => {
     expect(result).toEqual({
       content: "最终回答",
       reasoning: "先分析",
-      outputTokens: 42
+      tokenUsage: {
+        inputTokens: 0,
+        cachedInputTokens: 0,
+        outputTokens: 42,
+        reasoningTokens: 0,
+        totalTokens: 42
+      }
     });
     expect(progress.length).toBeGreaterThanOrEqual(4);
     const request = fetchMock.mock.calls[0]?.[1];
@@ -114,7 +120,13 @@ describe("ResponsesClient", () => {
     expect(result).toEqual({
       content: "最终回答",
       reasoning: "内部分析",
-      outputTokens: 18
+      tokenUsage: {
+        inputTokens: 0,
+        cachedInputTokens: 0,
+        outputTokens: 18,
+        reasoningTokens: 0,
+        totalTokens: 18
+      }
     });
     expect(progress.at(-1)).toEqual(result);
   });
@@ -171,14 +183,17 @@ describe("ResponsesClient", () => {
         response: {
           output: [{ type: "message", content: [{ text: "实时回答" }] }],
           usage: {
+            input_tokens: 100,
+            input_tokens_details: { cached_tokens: 20 },
             output_tokens: 9,
-            output_tokens_details: { reasoning_tokens: 4 }
+            output_tokens_details: { reasoning_tokens: 4 },
+            total_tokens: 109
           }
         }
       }
     ]);
     vi.stubGlobal("fetch", vi.fn<typeof fetch>(async () => response));
-    const progress: Array<{ outputTokens?: number }> = [];
+    const progress: Array<{ tokenUsage?: { outputTokens: number } }> = [];
 
     const result = await new ResponsesClient().answer(
       settings,
@@ -188,8 +203,14 @@ describe("ResponsesClient", () => {
       (snapshot) => progress.push(snapshot)
     );
 
-    expect(progress[0]?.outputTokens).toBeUndefined();
-    expect(progress.at(-1)).toMatchObject({ outputTokens: 5 });
-    expect(result).toMatchObject({ outputTokens: 5 });
+    expect(progress[0]?.tokenUsage).toBeUndefined();
+    expect(progress.at(-1)?.tokenUsage).toEqual({
+      inputTokens: 100,
+      cachedInputTokens: 20,
+      outputTokens: 9,
+      reasoningTokens: 4,
+      totalTokens: 109
+    });
+    expect(result.tokenUsage).toEqual(progress.at(-1)?.tokenUsage);
   });
 });

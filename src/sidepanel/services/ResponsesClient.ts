@@ -1,7 +1,8 @@
 import type {
   ConversationMessage,
   ModelSettings,
-  PageSnapshot
+  PageSnapshot,
+  TokenUsage
 } from "../../shared/types";
 
 interface ResponseContent {
@@ -20,8 +21,11 @@ interface ResponsesPayload {
   output?: ResponseOutput[];
   error?: { message?: string };
   usage?: {
+    input_tokens?: number;
+    input_tokens_details?: { cached_tokens?: number } | null;
     output_tokens?: number;
     output_tokens_details?: { reasoning_tokens?: number } | null;
+    total_tokens?: number;
   } | null;
 }
 
@@ -37,15 +41,31 @@ interface ResponsesStreamEvent {
 export interface ResponseProgress {
   content: string;
   reasoning: string;
-  outputTokens?: number;
+  tokenUsage?: TokenUsage;
 }
 
-/** 从总 output token 中扣除 reasoning token，仅保留用户可见回答的用量。 */
-function extractVisibleOutputTokens(data: ResponsesPayload): number | undefined {
-  const outputTokens = data.usage?.output_tokens;
+/** 规范化完成事件中的 token 用量，并约束兼容接口可能返回的不一致明细。 */
+function extractTokenUsage(data: ResponsesPayload): TokenUsage | undefined {
+  const usage = data.usage;
+  const outputTokens = usage?.output_tokens;
   if (outputTokens === undefined) return undefined;
-  const reasoningTokens = data.usage?.output_tokens_details?.reasoning_tokens ?? 0;
-  return Math.max(0, outputTokens - reasoningTokens);
+  const inputTokens = Math.max(0, usage?.input_tokens ?? 0);
+  const cachedInputTokens = Math.min(
+    inputTokens,
+    Math.max(0, usage?.input_tokens_details?.cached_tokens ?? 0)
+  );
+  const safeOutputTokens = Math.max(0, outputTokens);
+  const reasoningTokens = Math.min(
+    safeOutputTokens,
+    Math.max(0, usage?.output_tokens_details?.reasoning_tokens ?? 0)
+  );
+  return {
+    inputTokens,
+    cachedInputTokens,
+    outputTokens: safeOutputTokens,
+    reasoningTokens,
+    totalTokens: Math.max(0, usage?.total_tokens ?? inputTokens + safeOutputTokens)
+  };
 }
 
 /** 将网页快照封装为明确标注“不可信”的模型上下文。 */
@@ -176,13 +196,13 @@ export class ResponsesClient {
     let reasoning = "";
     let hasReasoningSummary = false;
     let completed = false;
-    let finalOutputTokens: number | undefined;
+    let finalTokenUsage: TokenUsage | undefined;
 
-    const reportProgress = (exactOutputTokens?: number) => {
+    const reportProgress = (tokenUsage?: TokenUsage) => {
       onProgress({
         content,
         reasoning,
-        ...(exactOutputTokens === undefined ? {} : { outputTokens: exactOutputTokens })
+        ...(tokenUsage === undefined ? {} : { tokenUsage })
       });
     };
 
@@ -217,8 +237,8 @@ export class ResponsesClient {
         completed = true;
         content = extractResponseText(event.response) || content;
         reasoning = extractReasoningSummary(event.response) || reasoning;
-        finalOutputTokens = extractVisibleOutputTokens(event.response);
-        reportProgress(finalOutputTokens);
+        finalTokenUsage = extractTokenUsage(event.response);
+        reportProgress(finalTokenUsage);
         return;
       }
       if (event.type === "response.failed" || event.type === "response.incomplete") {
@@ -244,7 +264,7 @@ export class ResponsesClient {
     return {
       content,
       reasoning,
-      ...(finalOutputTokens === undefined ? {} : { outputTokens: finalOutputTokens })
+      ...(finalTokenUsage === undefined ? {} : { tokenUsage: finalTokenUsage })
     };
   }
 }
