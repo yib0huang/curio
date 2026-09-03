@@ -222,6 +222,13 @@ export function MessageList({ messages }: MessageListProps) {
                       {message.content}
                     </MarkdownContent>
                     <div className="message-actions">
+                      {message.status === "complete" && (
+                        <MessageCopyButton
+                          content={message.content}
+                          label="复制回答"
+                          successLabel="回答已复制"
+                        />
+                      )}
                       {message.outputTokens !== undefined && message.outputTokens > 0 && (
                         <span
                           className={`token-count${message.status === "streaming" ? " streaming" : ""}`}
@@ -232,13 +239,6 @@ export function MessageList({ messages }: MessageListProps) {
                           {message.outputTokensEstimated ? "约 " : ""}
                           {message.outputTokens.toLocaleString()} tokens
                         </span>
-                      )}
-                      {message.status === "complete" && (
-                        <MessageCopyButton
-                          content={message.content}
-                          label="复制回答"
-                          successLabel="回答已复制"
-                        />
                       )}
                     </div>
                   </>

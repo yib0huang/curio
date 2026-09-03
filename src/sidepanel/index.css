@@ -44,7 +44,7 @@ button { cursor: pointer; }
 .messages.active { display: flex; flex-direction: column; gap: 14px; }
 .message { max-width: 90%; font-size: 15px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
 .message.user { align-self: flex-end; padding: 10px 13px; border-radius: 14px 14px 4px 14px; background: #6554d9; color: white; }
-.message.assistant { align-self: flex-start; }
+.message.assistant { align-self: flex-start; width: 90%; }
 .message.page-read-message { width: 90%; max-width: 620px; }
 .markdown-body { line-height: 1.7; white-space: normal; }
 .markdown-body > :first-child { margin-top: 0; }
@@ -94,7 +94,7 @@ button { cursor: pointer; }
 .page-read-content .markdown-body p { margin-bottom: 9px; }
 .page-read-actions { display: flex; justify-content: flex-start; padding: 7px 10px 9px; }
 .message-actions { display: flex; align-items: center; justify-content: flex-start; gap: 3px; min-height: 28px; margin-top: 6px; }
-.token-count { display: inline-flex; align-items: center; gap: 4px; min-height: 28px; color: #8a979d; font-size: 11px; font-variant-numeric: tabular-nums; letter-spacing: .01em; white-space: nowrap; }
+.token-count { display: inline-flex; align-items: center; gap: 4px; min-height: 28px; margin-left: auto; color: #8a979d; font-size: 11px; font-variant-numeric: tabular-nums; letter-spacing: .01em; white-space: nowrap; }
 .token-count.streaming { animation: token-count-arrive .24s ease-out; }
 .token-spark { color: #9a90d5; font-size: 10px; opacity: .72; }
 .token-count.streaming .token-spark { animation: token-spark-breathe 1.35s ease-in-out infinite; }
