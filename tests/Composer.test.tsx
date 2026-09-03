@@ -60,20 +60,23 @@ describe("Composer", () => {
       />
     );
 
-    const trigger = screen.getByLabelText("查看下一轮上下文用量");
+    const trigger = screen.getByLabelText(/查看上下文使用情况/);
     expect(trigger.closest("form")?.classList.contains("composer")).toBe(true);
+    expect(trigger.querySelectorAll("circle")).toHaveLength(2);
     fireEvent.click(trigger);
-    expect(screen.getByText("下一轮将发送")).toBeTruthy();
+    expect(screen.getByText("上下文使用情况")).toBeTruthy();
+    expect(screen.getByText(/约 .* \/ 1M tokens/)).toBeTruthy();
+    expect(screen.getByText(/下一轮预计发送约 .* tokens/)).toBeTruthy();
     expect(screen.getByText("系统提示")).toBeTruthy();
     expect(screen.getByText("网页上下文")).toBeTruthy();
     expect(screen.getByText("对话历史（最近 6 轮）")).toBeTruthy();
     expect(screen.getByText("当前输入")).toBeTruthy();
     expect(screen.queryByText(/输出|推理/)).toBeNull();
 
-    const totalBefore = screen.getByText(/^约 .* tokens$/).textContent;
+    const totalBefore = screen.getByText(/下一轮预计发送约 .* tokens/).textContent;
     fireEvent.change(screen.getByLabelText("问题"), {
       target: { value: "请详细概括这一页的主要内容" }
     });
-    expect(screen.getByText(/^约 .* tokens$/).textContent).not.toBe(totalBefore);
+    expect(screen.getByText(/下一轮预计发送约 .* tokens/).textContent).not.toBe(totalBefore);
   });
 });

@@ -16,6 +16,15 @@ interface ComposerProps {
   onSubmit: (question: string) => Promise<boolean>;
 }
 
+const MODEL_CONTEXT_LIMIT = 1_000_000;
+
+/** 以紧凑形式展示 1M 上下文窗口的占用比例。 */
+function formatUsagePercent(tokens: number): string {
+  const percent = Math.min(100, Math.max(0, tokens / MODEL_CONTEXT_LIMIT * 100));
+  if (percent > 0 && percent < 0.1) return "<0.1%";
+  return `${percent.toFixed(percent < 10 ? 1 : 0)}%`;
+}
+
 /** 管理问题草稿、页面操作和当前网页信息。 */
 export function Composer({
   page,
@@ -43,6 +52,8 @@ export function Composer({
       totalTokens: segments.reduce((total, segment) => total + segment.tokens, 0)
     };
   }, [baseUsage, draftTokens]);
+  const usagePercent = Math.min(100, usage.totalTokens / MODEL_CONTEXT_LIMIT * 100);
+  const usagePercentLabel = formatUsagePercent(usage.totalTokens);
 
   const submit = async (event?: FormEvent) => {
     event?.preventDefault();
@@ -75,28 +86,42 @@ export function Composer({
             className="context-usage-trigger"
             type="button"
             title="查看下一轮上下文用量"
-            aria-label="查看下一轮上下文用量"
+            aria-label={`查看上下文使用情况，已占用 ${usagePercentLabel}`}
             aria-expanded={usageOpen}
             onClick={() => setUsageOpen((current) => !current)}
           >
-            <span className="context-usage-ring" aria-hidden="true" />
+            <svg className="context-usage-ring" viewBox="0 0 24 24" aria-hidden="true">
+              <circle className="context-usage-ring-track" cx="12" cy="12" r="8" />
+              <circle
+                className="context-usage-ring-value"
+                cx="12"
+                cy="12"
+                r="8"
+                pathLength="100"
+                strokeDasharray={`${usagePercent} ${100 - usagePercent}`}
+              />
+            </svg>
           </button>
           {usageOpen && (
-            <div className="context-usage-popover" role="dialog" aria-label="下一轮 Token 组成">
+            <div className="context-usage-popover" role="dialog" aria-label="上下文使用情况">
               <div className="context-usage-header">
-                <div>
-                  <strong>下一轮将发送</strong>
-                  <span>约 {usage.totalTokens.toLocaleString()} tokens</span>
-                </div>
+                <strong>上下文使用情况</strong>
                 <button
                   className="context-usage-close"
                   type="button"
-                  aria-label="关闭下一轮 Token 组成"
+                  aria-label="关闭上下文使用情况"
                   onClick={() => setUsageOpen(false)}
                 >
                   ×
                 </button>
               </div>
+              <div className="context-usage-summary">
+                <span>{usagePercentLabel} 已占用</span>
+                <span>约 {usage.totalTokens.toLocaleString()} / 1M tokens</span>
+              </div>
+              <p className="context-next-turn">
+                下一轮预计发送约 {usage.totalTokens.toLocaleString()} tokens
+              </p>
               <div className="context-usage-bar" aria-hidden="true">
                 {usage.segments.filter((segment) => segment.tokens > 0).map((segment) => (
                   <span
