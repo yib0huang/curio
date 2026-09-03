@@ -73,8 +73,8 @@ button { cursor: pointer; }
 .reasoning { margin-bottom: 10px; color: #77756f; font-size: 13px; }
 .reasoning summary { display: flex; align-items: center; gap: 6px; width: fit-content; cursor: pointer; list-style: none; user-select: none; }
 .reasoning summary::-webkit-details-marker { display: none; }
-.reasoning summary::after { content: ""; flex: 0 0 auto; width: 6px; height: 6px; margin-left: 2px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(-45deg); transform-origin: center; transition: transform .15s ease; }
-.reasoning[open] summary::after { transform: rotate(45deg); }
+.reasoning summary::after { content: ""; flex: 0 0 auto; width: 6px; height: 6px; margin-left: 2px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: translateY(-1px) rotate(-45deg); transform-origin: center; transition: transform .15s ease; }
+.reasoning[open] summary::after { transform: translateY(-2px) rotate(45deg); }
 .reasoning-content { margin-top: 7px; padding-left: 12px; border-left: 2px solid #d9d6ce; }
 .reasoning-status { margin-bottom: 10px; color: #77756f; font-size: 13px; }
 .page-read { width: 100%; overflow: hidden; border: 1px solid #dfe8ea; border-radius: 12px; background: #f8fbfb; color: #6e7b82; font-size: 13px; }
