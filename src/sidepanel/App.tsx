@@ -2,10 +2,12 @@ import { Composer } from "./components/Composer";
 import { MessageList } from "./components/MessageList";
 import { SettingsDialog } from "./components/SettingsDialog";
 import { useCurioController } from "./hooks/useCurioController";
+import { useAutoHideScrollbars } from "./hooks/useAutoHideScrollbars";
 
 /** 组合侧边栏页面，不直接承载浏览器或模型协议细节。 */
 export function App() {
   const controller = useCurioController();
+  useAutoHideScrollbars();
 
   return (
     <>

@@ -1,7 +1,5 @@
-import { FormEvent, KeyboardEvent, useEffect, useState } from "react";
+import { FormEvent, KeyboardEvent, useState } from "react";
 import type { PageSnapshot } from "../../shared/types";
-
-type CopyState = "idle" | "success" | "error";
 
 interface ComposerProps {
   page: PageSnapshot | null;
@@ -24,11 +22,6 @@ export function Composer({
   onSubmit
 }: ComposerProps) {
   const [question, setQuestion] = useState("");
-  const [copyState, setCopyState] = useState<CopyState>("idle");
-
-  useEffect(() => {
-    setCopyState("idle");
-  }, [page]);
 
   const submit = async (event?: FormEvent) => {
     event?.preventDefault();
@@ -42,39 +35,24 @@ export function Composer({
     }
   };
 
-  /** 仅复制与字符数对应的已提取正文，便于用户检查读取结果。 */
-  const copyPageText = async () => {
-    if (!page?.text) return;
-
-    try {
-      await navigator.clipboard.writeText(page.text);
-      setCopyState("success");
-    } catch {
-      setCopyState("error");
-    }
-  };
-
   return (
     <footer className="composer-wrap">
       {error && <div className="error-banner">{error}</div>}
-      {copyState === "error" && (
-        <div className="error-banner">
-          复制失败，请检查浏览器剪贴板权限后重试。
-        </div>
-      )}
       <form className="composer" onSubmit={submit}>
         <textarea
           rows={3}
           maxLength={4000}
-          placeholder="询问当前页面…"
+          placeholder="关于这个页面，想问什么？"
           aria-label="问题"
           value={question}
           disabled={disabled}
           onChange={(event) => setQuestion(event.target.value)}
           onKeyDown={handleKeyDown}
         />
-        <button type="submit" aria-label="发送" disabled={disabled}>
-          ↑
+        <button type="submit" aria-label="发送" disabled={disabled || !question.trim()}>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 19V5M6.5 10.5 12 5l5.5 5.5" />
+          </svg>
         </button>
       </form>
       <div className="composer-toolbar">
@@ -91,41 +69,9 @@ export function Composer({
           </svg>
         </button>
         <div className="page-meta" aria-live="polite">
-          <span className="page-title" title={page?.title}>
+          <span className="page-title" title={page ? pageStatus : undefined}>
             {page ? page.title || "无标题页面" : pageStatus}
           </span>
-          {page && (
-            <>
-              <span
-                className="character-count"
-                aria-label={`${page.text.length.toLocaleString()} 个字符`}
-              >
-                {page.text.length.toLocaleString()}
-              </span>
-              <button
-                className="icon-button copy-button"
-                type="button"
-                title={copyState === "success" ? "已复制正文" : "复制已读取的正文"}
-                aria-label={copyState === "success" ? "正文已复制" : "复制已读取的正文"}
-                disabled={!page.text}
-                onClick={() => void copyPageText()}
-              >
-                <svg className="action-icon" viewBox="0 0 24 24" aria-hidden="true">
-                  {copyState === "success" ? (
-                    <path d="m5 12 4 4L19 6" />
-                  ) : (
-                    <>
-                      <rect x="8" y="8" width="11" height="11" rx="2" />
-                      <path d="M16 8V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h1" />
-                    </>
-                  )}
-                </svg>
-              </button>
-              <span className="visually-hidden" role="status">
-                {copyState === "success" ? "已复制当前网页正文" : ""}
-              </span>
-            </>
-          )}
         </div>
         <button
           className="icon-button settings-button"
