@@ -1,10 +1,7 @@
 // @vitest-environment node
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  ResponsesClient,
-  estimateOutputTokens
-} from "../src/sidepanel/services/ResponsesClient";
+import { ResponsesClient } from "../src/sidepanel/services/ResponsesClient";
 
 const settings = {
   apiUrl: "https://example.invalid/v1/responses",
@@ -70,8 +67,7 @@ describe("ResponsesClient", () => {
     expect(result).toEqual({
       content: "最终回答",
       reasoning: "先分析",
-      outputTokens: 42,
-      outputTokensEstimated: false
+      outputTokens: 42
     });
     expect(progress.length).toBeGreaterThanOrEqual(4);
     const request = fetchMock.mock.calls[0]?.[1];
@@ -118,8 +114,7 @@ describe("ResponsesClient", () => {
     expect(result).toEqual({
       content: "最终回答",
       reasoning: "内部分析",
-      outputTokens: 18,
-      outputTokensEstimated: false
+      outputTokens: 18
     });
     expect(progress.at(-1)).toEqual(result);
   });
@@ -167,7 +162,7 @@ describe("ResponsesClient", () => {
     ).rejects.toThrow("完成前中断");
   });
 
-  it("流式阶段估算 token，并在完成事件后采用精确 usage", async () => {
+  it("流式阶段不报告 token，并在完成事件后采用可见 output usage", async () => {
     const response = createStreamResponse([
       { type: "response.output_text.delta", delta: "实时" },
       { type: "response.output_text.delta", delta: "回答" },
@@ -183,7 +178,7 @@ describe("ResponsesClient", () => {
       }
     ]);
     vi.stubGlobal("fetch", vi.fn<typeof fetch>(async () => response));
-    const progress: Array<{ outputTokens: number; outputTokensEstimated: boolean }> = [];
+    const progress: Array<{ outputTokens?: number }> = [];
 
     const result = await new ResponsesClient().answer(
       settings,
@@ -193,9 +188,8 @@ describe("ResponsesClient", () => {
       (snapshot) => progress.push(snapshot)
     );
 
-    expect(progress[0]).toMatchObject({ outputTokens: 2, outputTokensEstimated: true });
-    expect(progress.at(-1)).toMatchObject({ outputTokens: 5, outputTokensEstimated: false });
-    expect(result).toMatchObject({ outputTokens: 5, outputTokensEstimated: false });
-    expect(estimateOutputTokens("hello world")).toBeGreaterThan(0);
+    expect(progress[0]?.outputTokens).toBeUndefined();
+    expect(progress.at(-1)).toMatchObject({ outputTokens: 5 });
+    expect(result).toMatchObject({ outputTokens: 5 });
   });
 });

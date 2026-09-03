@@ -82,8 +82,7 @@ export class ConversationStore {
     tabId: number,
     content: string,
     reasoning: string,
-    outputTokens?: number,
-    outputTokensEstimated?: boolean
+    outputTokens?: number
   ): ConversationMessage[] {
     const messages = this.conversations.get(tabId) ?? [];
     const assistant = messages.at(-1);
@@ -92,7 +91,7 @@ export class ConversationStore {
         ...assistant,
         content,
         reasoning,
-        ...(outputTokens === undefined ? {} : { outputTokens, outputTokensEstimated })
+        ...(outputTokens === undefined ? {} : { outputTokens })
       };
     }
     return [...messages];

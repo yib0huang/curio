@@ -114,20 +114,19 @@ describe("MessageList", () => {
     expect(screen.getByLabelText("复制回答")).toBeTruthy();
   });
 
-  it("流式生成时动态显示估算 token，完成后才显示复制按钮", () => {
+  it("流式生成时隐藏 token 和复制按钮，完成后一起显示", () => {
     const view = render(
       <MessageList
         messages={[{
           role: "assistant",
           content: "正在生成",
           status: "streaming",
-          outputTokens: 4,
-          outputTokensEstimated: true
+          outputTokens: 4
         }]}
       />
     );
 
-    expect(screen.getByText("4 tokens")).toBeTruthy();
+    expect(screen.queryByText("4 tokens")).toBeNull();
     expect(screen.queryByLabelText("复制回答")).toBeNull();
 
     view.rerender(
@@ -136,8 +135,7 @@ describe("MessageList", () => {
           role: "assistant",
           content: "生成完成",
           status: "complete",
-          outputTokens: 9,
-          outputTokensEstimated: false
+          outputTokens: 9
         }]}
       />
     );

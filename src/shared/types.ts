@@ -48,10 +48,8 @@ export interface ConversationMessage {
   startedAt?: number;
   /** 请求完成时冻结的总耗时，避免历史消息继续计时。 */
   elapsedSeconds?: number;
-  /** 当前已生成的 output token 数；流式阶段可能是本地估算值。 */
+  /** 请求完成后返回的可见回答 output token 数。 */
   outputTokens?: number;
-  /** 标记 token 数来自本地估算，完成事件返回 usage 后会切换为精确值。 */
-  outputTokensEstimated?: boolean;
 }
 
 /** 内容脚本支持的读取页面消息。 */

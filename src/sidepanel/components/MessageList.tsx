@@ -229,11 +229,10 @@ export function MessageList({ messages }: MessageListProps) {
                           successLabel="回答已复制"
                         />
                       )}
-                      {message.outputTokens !== undefined && message.outputTokens > 0 && (
+                      {message.status === "complete" && message.outputTokens !== undefined && message.outputTokens > 0 && (
                         <span
-                          className={`token-count${message.status === "streaming" ? " streaming" : ""}`}
-                          key={message.outputTokens}
-                          title={message.outputTokensEstimated ? "生成中，token 数为实时估算" : "本次回答的 output token 数"}
+                          className="token-count"
+                          title="本次回答的 output token 数"
                         >
                           <span className="token-spark" aria-hidden="true">✦</span>
                           {message.outputTokens.toLocaleString()} tokens

@@ -37,25 +37,7 @@ interface ResponsesStreamEvent {
 export interface ResponseProgress {
   content: string;
   reasoning: string;
-  outputTokens: number;
-  outputTokensEstimated: boolean;
-}
-
-/**
- * 在流式接口尚未返回 usage 时估算已生成 token 数。
- * CJK 字符通常接近一字一 token，其余文本按 UTF-8 字节数折算；结果只用于动态反馈。
- */
-export function estimateOutputTokens(text: string): number {
-  if (!text) return 0;
-  const cjkCharacters = text.match(/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/gu)?.length ?? 0;
-  const remainingText = text
-    .replace(/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/gu, "")
-    .replace(/\s+/g, " ")
-    .trim();
-  const remainingTokens = remainingText
-    ? Math.ceil(new TextEncoder().encode(remainingText).length / 4)
-    : 0;
-  return Math.max(1, cjkCharacters + remainingTokens);
+  outputTokens?: number;
 }
 
 /** 从总 output token 中扣除 reasoning token，仅保留用户可见回答的用量。 */
@@ -200,8 +182,7 @@ export class ResponsesClient {
       onProgress({
         content,
         reasoning,
-        outputTokens: exactOutputTokens ?? estimateOutputTokens(content),
-        outputTokensEstimated: exactOutputTokens === undefined
+        ...(exactOutputTokens === undefined ? {} : { outputTokens: exactOutputTokens })
       });
     };
 
@@ -263,8 +244,7 @@ export class ResponsesClient {
     return {
       content,
       reasoning,
-      outputTokens: finalOutputTokens ?? estimateOutputTokens(content),
-      outputTokensEstimated: finalOutputTokens === undefined
+      ...(finalOutputTokens === undefined ? {} : { outputTokens: finalOutputTokens })
     };
   }
 }

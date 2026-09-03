@@ -95,17 +95,13 @@ button { cursor: pointer; }
 .page-read-actions { display: flex; justify-content: flex-start; padding: 7px 10px 9px; }
 .message-actions { display: flex; align-items: center; justify-content: flex-start; gap: 3px; min-height: 28px; margin-top: 6px; }
 .token-count { display: inline-flex; align-items: center; gap: 4px; min-height: 28px; margin-left: auto; color: #8a979d; font-size: 11px; font-variant-numeric: tabular-nums; letter-spacing: .01em; white-space: nowrap; }
-.token-count.streaming { animation: token-count-arrive .24s ease-out; }
 .token-spark { color: #9a90d5; font-size: 10px; opacity: .72; }
-.token-count.streaming .token-spark { animation: token-spark-breathe 1.35s ease-in-out infinite; }
 .message-copy-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 28px; height: 28px; padding: 0 6px; border: 0; border-radius: 7px; background: transparent; color: #77756f; font-size: 12px; }
 .message-copy-button:hover { background: #efefeb; color: #4c4a45; }
 .message-copy-button.labeled { padding: 0 9px; border: 1px solid #e1dfd8; background: #fafaf8; }
 .message-copy-button.labeled:hover { border-color: #d2cfc6; background: #f1f0ec; }
 .message-copy-button .action-icon { width: 15px; height: 15px; }
 @keyframes page-read-pulse { 50% { background: #dce9ec; transform: scale(.96); } }
-@keyframes token-count-arrive { from { opacity: .45; transform: translateY(2px); } }
-@keyframes token-spark-breathe { 50% { opacity: .28; transform: scale(.78) rotate(12deg); } }
 
 /* 问题输入区、页面操作和当前网页信息 */
 .composer-wrap { grid-row: 2; min-width: 0; overflow: hidden; padding: 12px 16px 14px; background: #f3f7f8; }
@@ -175,10 +171,6 @@ dialog::backdrop { background: rgba(20, 18, 14, .35); }
   #settings-form input { background: #20201e; border-color: #484842; }
   *.is-scrolling { scrollbar-color: rgba(190, 187, 178, .45) transparent; }
   *.is-scrolling::-webkit-scrollbar-thumb { background-color: rgba(190, 187, 178, .45); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .token-count.streaming, .token-count.streaming .token-spark { animation: none; }
 }
 
 @keyframes page-read-pulse-dark { 50% { background: #4a426d; transform: scale(.96); } }
