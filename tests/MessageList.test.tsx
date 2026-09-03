@@ -127,7 +127,7 @@ describe("MessageList", () => {
       />
     );
 
-    expect(screen.getByText("约 4 tokens")).toBeTruthy();
+    expect(screen.getByText("4 tokens")).toBeTruthy();
     expect(screen.queryByLabelText("复制回答")).toBeNull();
 
     view.rerender(

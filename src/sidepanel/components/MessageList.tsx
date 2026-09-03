@@ -236,7 +236,6 @@ export function MessageList({ messages }: MessageListProps) {
                           title={message.outputTokensEstimated ? "生成中，token 数为实时估算" : "本次回答的 output token 数"}
                         >
                           <span className="token-spark" aria-hidden="true">✦</span>
-                          {message.outputTokensEstimated ? "约 " : ""}
                           {message.outputTokens.toLocaleString()} tokens
                         </span>
                       )}

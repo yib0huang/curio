@@ -175,7 +175,10 @@ describe("ResponsesClient", () => {
         type: "response.completed",
         response: {
           output: [{ type: "message", content: [{ text: "实时回答" }] }],
-          usage: { output_tokens: 9 }
+          usage: {
+            output_tokens: 9,
+            output_tokens_details: { reasoning_tokens: 4 }
+          }
         }
       }
     ]);
@@ -191,8 +194,8 @@ describe("ResponsesClient", () => {
     );
 
     expect(progress[0]).toMatchObject({ outputTokens: 2, outputTokensEstimated: true });
-    expect(progress.at(-1)).toMatchObject({ outputTokens: 9, outputTokensEstimated: false });
-    expect(result).toMatchObject({ outputTokens: 9, outputTokensEstimated: false });
+    expect(progress.at(-1)).toMatchObject({ outputTokens: 5, outputTokensEstimated: false });
+    expect(result).toMatchObject({ outputTokens: 5, outputTokensEstimated: false });
     expect(estimateOutputTokens("hello world")).toBeGreaterThan(0);
   });
 });

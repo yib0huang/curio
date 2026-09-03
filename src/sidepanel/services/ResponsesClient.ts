@@ -19,7 +19,10 @@ interface ResponsesPayload {
   output_text?: string;
   output?: ResponseOutput[];
   error?: { message?: string };
-  usage?: { output_tokens?: number } | null;
+  usage?: {
+    output_tokens?: number;
+    output_tokens_details?: { reasoning_tokens?: number } | null;
+  } | null;
 }
 
 interface ResponsesStreamEvent {
@@ -53,6 +56,14 @@ export function estimateOutputTokens(text: string): number {
     ? Math.ceil(new TextEncoder().encode(remainingText).length / 4)
     : 0;
   return Math.max(1, cjkCharacters + remainingTokens);
+}
+
+/** 从总 output token 中扣除 reasoning token，仅保留用户可见回答的用量。 */
+function extractVisibleOutputTokens(data: ResponsesPayload): number | undefined {
+  const outputTokens = data.usage?.output_tokens;
+  if (outputTokens === undefined) return undefined;
+  const reasoningTokens = data.usage?.output_tokens_details?.reasoning_tokens ?? 0;
+  return Math.max(0, outputTokens - reasoningTokens);
 }
 
 /** 将网页快照封装为明确标注“不可信”的模型上下文。 */
@@ -189,7 +200,7 @@ export class ResponsesClient {
       onProgress({
         content,
         reasoning,
-        outputTokens: exactOutputTokens ?? estimateOutputTokens(`${reasoning}\n${content}`),
+        outputTokens: exactOutputTokens ?? estimateOutputTokens(content),
         outputTokensEstimated: exactOutputTokens === undefined
       });
     };
@@ -225,7 +236,7 @@ export class ResponsesClient {
         completed = true;
         content = extractResponseText(event.response) || content;
         reasoning = extractReasoningSummary(event.response) || reasoning;
-        finalOutputTokens = event.response.usage?.output_tokens;
+        finalOutputTokens = extractVisibleOutputTokens(event.response);
         reportProgress(finalOutputTokens);
         return;
       }
@@ -252,7 +263,7 @@ export class ResponsesClient {
     return {
       content,
       reasoning,
-      outputTokens: finalOutputTokens ?? estimateOutputTokens(`${reasoning}\n${content}`),
+      outputTokens: finalOutputTokens ?? estimateOutputTokens(content),
       outputTokensEstimated: finalOutputTokens === undefined
     };
   }
