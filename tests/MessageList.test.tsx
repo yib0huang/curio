@@ -114,6 +114,38 @@ describe("MessageList", () => {
     expect(screen.getByLabelText("复制回答")).toBeTruthy();
   });
 
+  it("流式生成时动态显示估算 token，完成后才显示复制按钮", () => {
+    const view = render(
+      <MessageList
+        messages={[{
+          role: "assistant",
+          content: "正在生成",
+          status: "streaming",
+          outputTokens: 4,
+          outputTokensEstimated: true
+        }]}
+      />
+    );
+
+    expect(screen.getByText("约 4 tokens")).toBeTruthy();
+    expect(screen.queryByLabelText("复制回答")).toBeNull();
+
+    view.rerender(
+      <MessageList
+        messages={[{
+          role: "assistant",
+          content: "生成完成",
+          status: "complete",
+          outputTokens: 9,
+          outputTokensEstimated: false
+        }]}
+      />
+    );
+
+    expect(screen.getByText("9 tokens")).toBeTruthy();
+    expect(screen.getByLabelText("复制回答")).toBeTruthy();
+  });
+
   it("完成后冻结总用时且保持默认收起", () => {
     render(
       <MessageList

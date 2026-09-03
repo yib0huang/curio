@@ -81,7 +81,9 @@ export class ConversationStore {
   updateStreamingAssistant(
     tabId: number,
     content: string,
-    reasoning: string
+    reasoning: string,
+    outputTokens?: number,
+    outputTokensEstimated?: boolean
   ): ConversationMessage[] {
     const messages = this.conversations.get(tabId) ?? [];
     const assistant = messages.at(-1);
@@ -89,7 +91,8 @@ export class ConversationStore {
       messages[messages.length - 1] = {
         ...assistant,
         content,
-        reasoning
+        reasoning,
+        ...(outputTokens === undefined ? {} : { outputTokens, outputTokensEstimated })
       };
     }
     return [...messages];

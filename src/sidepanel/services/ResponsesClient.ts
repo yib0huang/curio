@@ -19,6 +19,7 @@ interface ResponsesPayload {
   output_text?: string;
   output?: ResponseOutput[];
   error?: { message?: string };
+  usage?: { output_tokens?: number } | null;
 }
 
 interface ResponsesStreamEvent {
@@ -33,6 +34,25 @@ interface ResponsesStreamEvent {
 export interface ResponseProgress {
   content: string;
   reasoning: string;
+  outputTokens: number;
+  outputTokensEstimated: boolean;
+}
+
+/**
+ * 在流式接口尚未返回 usage 时估算已生成 token 数。
+ * CJK 字符通常接近一字一 token，其余文本按 UTF-8 字节数折算；结果只用于动态反馈。
+ */
+export function estimateOutputTokens(text: string): number {
+  if (!text) return 0;
+  const cjkCharacters = text.match(/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/gu)?.length ?? 0;
+  const remainingText = text
+    .replace(/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const remainingTokens = remainingText
+    ? Math.ceil(new TextEncoder().encode(remainingText).length / 4)
+    : 0;
+  return Math.max(1, cjkCharacters + remainingTokens);
 }
 
 /** 将网页快照封装为明确标注“不可信”的模型上下文。 */
@@ -163,31 +183,41 @@ export class ResponsesClient {
     let reasoning = "";
     let hasReasoningSummary = false;
     let completed = false;
+    let finalOutputTokens: number | undefined;
+
+    const reportProgress = (exactOutputTokens?: number) => {
+      onProgress({
+        content,
+        reasoning,
+        outputTokens: exactOutputTokens ?? estimateOutputTokens(`${reasoning}\n${content}`),
+        outputTokensEstimated: exactOutputTokens === undefined
+      });
+    };
 
     const applyEvent = (event: ResponsesStreamEvent | null) => {
       if (!event) return;
 
       if (event.type === "response.output_text.delta") {
         content += event.delta ?? "";
-        onProgress({ content, reasoning });
+        reportProgress();
         return;
       }
       if (event.type === "response.refusal.delta") {
         content += event.delta ?? "";
-        onProgress({ content, reasoning });
+        reportProgress();
         return;
       }
       if (event.type === "response.reasoning_summary_text.delta") {
         if (!hasReasoningSummary) reasoning = "";
         hasReasoningSummary = true;
         reasoning += event.delta ?? "";
-        onProgress({ content, reasoning });
+        reportProgress();
         return;
       }
       if (event.type === "response.reasoning_text.delta") {
         if (!hasReasoningSummary) {
           reasoning += event.delta ?? "";
-          onProgress({ content, reasoning });
+          reportProgress();
         }
         return;
       }
@@ -195,7 +225,8 @@ export class ResponsesClient {
         completed = true;
         content = extractResponseText(event.response) || content;
         reasoning = extractReasoningSummary(event.response) || reasoning;
-        onProgress({ content, reasoning });
+        finalOutputTokens = event.response.usage?.output_tokens;
+        reportProgress(finalOutputTokens);
         return;
       }
       if (event.type === "response.failed" || event.type === "response.incomplete") {
@@ -218,6 +249,11 @@ export class ResponsesClient {
 
     if (!completed) throw new Error("模型连接在回答完成前中断，请重新发送问题。");
     if (!content.trim()) throw new Error("模型返回了空内容，请稍后重试。");
-    return { content, reasoning };
+    return {
+      content,
+      reasoning,
+      outputTokens: finalOutputTokens ?? estimateOutputTokens(`${reasoning}\n${content}`),
+      outputTokensEstimated: finalOutputTokens === undefined
+    };
   }
 }

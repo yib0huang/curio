@@ -1,7 +1,10 @@
 // @vitest-environment node
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ResponsesClient } from "../src/sidepanel/services/ResponsesClient";
+import {
+  ResponsesClient,
+  estimateOutputTokens
+} from "../src/sidepanel/services/ResponsesClient";
 
 const settings = {
   apiUrl: "https://example.invalid/v1/responses",
@@ -47,7 +50,8 @@ describe("ResponsesClient", () => {
           output: [
             { type: "reasoning", summary: [{ text: "先分析" }] },
             { type: "message", content: [{ text: "最终回答" }] }
-          ]
+          ],
+          usage: { output_tokens: 42 }
         }
       }
     ]);
@@ -63,7 +67,12 @@ describe("ResponsesClient", () => {
       (snapshot) => progress.push(snapshot)
     );
 
-    expect(result).toEqual({ content: "最终回答", reasoning: "先分析" });
+    expect(result).toEqual({
+      content: "最终回答",
+      reasoning: "先分析",
+      outputTokens: 42,
+      outputTokensEstimated: false
+    });
     expect(progress.length).toBeGreaterThanOrEqual(4);
     const request = fetchMock.mock.calls[0]?.[1];
     const requestBody = JSON.parse(String(request?.body));
@@ -89,7 +98,8 @@ describe("ResponsesClient", () => {
               output: [
                 { type: "reasoning", content: [{ text: "内部分析" }] },
                 { type: "message", content: [{ text: "最终回答" }] }
-              ]
+              ],
+              usage: { output_tokens: 18 }
             }
           }
         ])
@@ -105,7 +115,12 @@ describe("ResponsesClient", () => {
       (snapshot) => progress.push(snapshot)
     );
 
-    expect(result).toEqual({ content: "最终回答", reasoning: "内部分析" });
+    expect(result).toEqual({
+      content: "最终回答",
+      reasoning: "内部分析",
+      outputTokens: 18,
+      outputTokensEstimated: false
+    });
     expect(progress.at(-1)).toEqual(result);
   });
 
@@ -150,5 +165,34 @@ describe("ResponsesClient", () => {
     await expect(
       new ResponsesClient().answer(settings, page, [], "问题", () => undefined)
     ).rejects.toThrow("完成前中断");
+  });
+
+  it("流式阶段估算 token，并在完成事件后采用精确 usage", async () => {
+    const response = createStreamResponse([
+      { type: "response.output_text.delta", delta: "实时" },
+      { type: "response.output_text.delta", delta: "回答" },
+      {
+        type: "response.completed",
+        response: {
+          output: [{ type: "message", content: [{ text: "实时回答" }] }],
+          usage: { output_tokens: 9 }
+        }
+      }
+    ]);
+    vi.stubGlobal("fetch", vi.fn<typeof fetch>(async () => response));
+    const progress: Array<{ outputTokens: number; outputTokensEstimated: boolean }> = [];
+
+    const result = await new ResponsesClient().answer(
+      settings,
+      page,
+      [],
+      "问题",
+      (snapshot) => progress.push(snapshot)
+    );
+
+    expect(progress[0]).toMatchObject({ outputTokens: 2, outputTokensEstimated: true });
+    expect(progress.at(-1)).toMatchObject({ outputTokens: 9, outputTokensEstimated: false });
+    expect(result).toMatchObject({ outputTokens: 9, outputTokensEstimated: false });
+    expect(estimateOutputTokens("hello world")).toBeGreaterThan(0);
   });
 });
