@@ -8,6 +8,7 @@ import { MessageList, formatElapsedTime } from "../src/sidepanel/components/Mess
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+  vi.unstubAllGlobals();
 });
 
 describe("MessageList", () => {
@@ -61,6 +62,56 @@ describe("MessageList", () => {
     );
     expect(details?.open).toBe(true);
     expect(details?.contains(screen.getByText("流式回答"))).toBe(false);
+  });
+
+  it("把网页读取结果作为独立消息展开显示", async () => {
+    vi.useFakeTimers();
+    const writeText = vi.fn(async () => undefined);
+    vi.stubGlobal("navigator", { clipboard: { writeText } });
+    render(
+      <MessageList
+        messages={[
+          {
+            role: "assistant",
+            kind: "page-read",
+            content: "第一页正文\n第二页正文",
+            status: "complete",
+            startedAt: Date.now()
+          }
+        ]}
+      />
+    );
+
+    const summary = screen.getByText("网页内容已读取");
+    expect(screen.getByText("11 字符")).toBeTruthy();
+    expect(screen.queryByText(/第一页正文/)).toBeTruthy();
+    expect(document.querySelector("details")?.open).toBe(false);
+    fireEvent.click(summary);
+    expect(document.querySelector("details")?.open).toBe(true);
+    await act(async () => fireEvent.click(screen.getByLabelText("复制网页内容")));
+    expect(writeText).toHaveBeenCalledWith("第一页正文\n第二页正文");
+    expect(screen.getByLabelText("已复制")).toBeTruthy();
+    act(() => vi.advanceTimersByTime(2_000));
+    expect(screen.getByLabelText("复制网页内容")).toBeTruthy();
+  });
+
+  it("可以复制单条模型回答", async () => {
+    vi.useFakeTimers();
+    const writeText = vi.fn(async () => undefined);
+    vi.stubGlobal("navigator", { clipboard: { writeText } });
+    render(
+      <MessageList
+        messages={[{ role: "assistant", content: "单条回答", status: "complete" }]}
+      />
+    );
+
+    await act(async () => fireEvent.click(screen.getByLabelText("复制回答")));
+    expect(writeText).toHaveBeenCalledWith("单条回答");
+    expect(screen.getByLabelText("回答已复制")).toBeTruthy();
+    act(() => vi.advanceTimersByTime(1_999));
+    expect(screen.getByLabelText("回答已复制")).toBeTruthy();
+    act(() => vi.advanceTimersByTime(1));
+    expect(screen.getByLabelText("复制回答")).toBeTruthy();
   });
 
   it("完成后冻结总用时且保持默认收起", () => {

@@ -74,11 +74,36 @@ export function useCurioController() {
       setSending(true);
       const requestTabId = tabId;
       const history = conversationStore.get(requestTabId);
-      setMessages(conversationStore.startTurn(requestTabId, question));
+      const isFirstQuestion = history.length === 0;
+      let requestPage = page;
+      setMessages(
+        isFirstQuestion
+          ? conversationStore.startPageReadTurn(requestTabId, question, page.text)
+          : conversationStore.startTurn(requestTabId, question)
+      );
       try {
+        if (isFirstQuestion) {
+          const pageResult = await pageService.readActivePage({ scanVirtualPages: true });
+          if (pageResult.tabId !== requestTabId || !pageResult.page) {
+            throw new Error(pageResult.error || "浏览网页时当前标签页发生了变化，请重新发送问题。");
+          }
+          requestPage = pageResult.page;
+          if (activeTabIdRef.current === requestTabId) {
+            setPage(pageResult.page);
+            setPageStatus(pageResult.status);
+            setError(pageResult.error ?? "");
+          }
+
+          const thinkingMessages = conversationStore.completePageRead(
+            requestTabId,
+            pageResult.page.text
+          );
+          if (activeTabIdRef.current === requestTabId) setMessages(thinkingMessages);
+        }
+
         const answer = await responsesClient.answer(
           currentSettings,
-          page,
+          requestPage,
           history,
           question,
           (progress) => {
@@ -111,7 +136,7 @@ export function useCurioController() {
         setSending(false);
       }
     },
-    [conversationStore, page, responsesClient, sending, settingsRepository, tabId]
+    [conversationStore, page, pageService, responsesClient, sending, settingsRepository, tabId]
   );
 
   useEffect(() => {

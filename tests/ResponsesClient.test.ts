@@ -109,6 +109,36 @@ describe("ResponsesClient", () => {
     expect(progress.at(-1)).toEqual(result);
   });
 
+  it("不会把界面中的网页读取记录重复发送为对话历史", async () => {
+    const response = createStreamResponse([
+      {
+        type: "response.completed",
+        response: { output: [{ type: "message", content: [{ text: "新回答" }] }] }
+      }
+    ]);
+    const fetchMock = vi.fn<typeof fetch>(async () => response);
+    vi.stubGlobal("fetch", fetchMock);
+
+    await new ResponsesClient().answer(
+      settings,
+      page,
+      [
+        { role: "user", content: "旧问题" },
+        { role: "assistant", kind: "page-read", content: "不应重复发送的网页快照" },
+        { role: "assistant", kind: "answer", content: "旧回答" }
+      ],
+      "新问题",
+      () => undefined
+    );
+
+    const request = fetchMock.mock.calls[0]?.[1];
+    const requestBody = JSON.parse(String(request?.body));
+    const historyText = requestBody.input.map((item: { content: string }) => item.content).join("\n");
+    expect(historyText).toContain("旧问题");
+    expect(historyText).toContain("旧回答");
+    expect(historyText).not.toContain("不应重复发送的网页快照");
+  });
+
   it("拒绝把提前断开的半截响应保存为完成回答", async () => {
     vi.stubGlobal(
       "fetch",

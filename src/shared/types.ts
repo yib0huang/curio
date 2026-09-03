@@ -9,6 +9,20 @@ export interface PageSnapshot {
   description: string;
   text: string;
   capturedAt: string;
+  /** 提取覆盖范围与降级信息，用于向用户如实展示读取质量。 */
+  extraction?: PageExtractionInfo;
+}
+
+/** 当前页面快照的采集范围和完整性摘要。 */
+export interface PageExtractionInfo {
+  frameCount: number;
+  inaccessibleFrameCount: number;
+  shadowRootCount: number;
+  sourceCharacters: number;
+  truncated: boolean;
+  mode: "structured-dom" | "visible-text" | "multi-frame";
+  /** 通过有界滚动从虚拟文档渲染器收集到的页数。 */
+  virtualPageCount?: number;
 }
 
 /** 用户配置的模型连接信息。 */
@@ -22,6 +36,10 @@ export interface ModelSettings {
 export interface ConversationMessage {
   role: "user" | "assistant";
   content: string;
+  /** 区分模型回答和仅用于界面展示的网页读取记录。 */
+  kind?: "answer" | "page-read";
+  /** 请求过程中由客户端展示的当前阶段，不作为模型推理内容持久化。 */
+  activity?: string;
   /** 模型提供的推理摘要；它与面向用户的最终回答分开展示。 */
   reasoning?: string;
   /** 仅用于标记正在接收增量内容的临时助手消息。 */
@@ -35,6 +53,8 @@ export interface ConversationMessage {
 /** 内容脚本支持的读取页面消息。 */
 export interface ReadPageMessage {
   type: "CURIO_READ_PAGE";
+  /** 仅在首问时启用虚拟分页滚动，普通刷新和标签切换不得改变页面位置。 */
+  scanVirtualPages?: boolean;
 }
 
 /** 内容脚本返回的可判别结果。 */
