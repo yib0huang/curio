@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   answer: vi.fn(),
+  compressHistory: vi.fn(),
   loadSettings: vi.fn(),
   readActivePage: vi.fn()
 }));
@@ -18,6 +19,7 @@ vi.mock("../src/sidepanel/services/ChromePageService", () => ({
 vi.mock("../src/sidepanel/services/ResponsesClient", () => ({
   ResponsesClient: class {
     answer = mocks.answer;
+    compressHistory = mocks.compressHistory;
   }
 }));
 
@@ -60,6 +62,7 @@ describe("useCurioController", () => {
       model: "test-model"
     });
     mocks.answer.mockResolvedValue({ content: "回答", reasoning: "" });
+    mocks.compressHistory.mockResolvedValue("压缩后的历史摘要");
   });
 
   it("首问先重新浏览网页再请求模型，后续追问复用快照", async () => {
@@ -108,5 +111,27 @@ describe("useCurioController", () => {
       expect(await result.current.submitQuestion("追问")).toBe(true);
     });
     expect(order).toEqual(["answer"]);
+  });
+
+  it("接近 1M 上限时压缩旧上下文，同时保留完整聊天记录", async () => {
+    const longAnswer = "长".repeat(950_000);
+    mocks.answer
+      .mockResolvedValueOnce({ content: longAnswer, reasoning: "" })
+      .mockResolvedValueOnce({ content: "压缩后继续回答", reasoning: "" });
+
+    const { result } = renderHook(() => useCurioController());
+    await waitFor(() => expect(result.current.page).not.toBeNull());
+
+    await act(async () => {
+      expect(await result.current.submitQuestion("第一个问题")).toBe(true);
+      expect(await result.current.submitQuestion("继续追问")).toBe(true);
+    });
+
+    expect(mocks.compressHistory).toHaveBeenCalledTimes(1);
+    const compressedHistory = mocks.answer.mock.calls[1]?.[2];
+    expect(compressedHistory).toHaveLength(1);
+    expect(compressedHistory[0].content).toContain("压缩后的历史摘要");
+    expect(result.current.messages.some((message) => message.content === longAnswer)).toBe(true);
+    expect(result.current.messages.at(-1)?.content).toBe("压缩后继续回答");
   });
 });

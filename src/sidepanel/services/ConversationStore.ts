@@ -1,13 +1,52 @@
 import type { ConversationMessage } from "../../shared/types";
+import { createCompressedHistoryMessage } from "./PromptContext";
+
+interface CompressedContext {
+  coveredMessageCount: number;
+  summary: string;
+}
 
 /** 在 Side Panel 生命周期内按标签页隔离多轮对话。 */
 export class ConversationStore {
   private readonly conversations = new Map<number, ConversationMessage[]>();
+  private readonly compressedContexts = new Map<number, CompressedContext>();
 
   /** 返回指定标签页的会话副本，防止调用方直接修改内部状态。 */
   get(tabId: number | null): ConversationMessage[] {
     if (tabId === null) return [];
     return [...(this.conversations.get(tabId) ?? [])];
+  }
+
+  /** 返回下一轮实际发送的历史：未压缩时为全部对话，压缩后为摘要加新增对话。 */
+  getRequestHistory(tabId: number | null): ConversationMessage[] {
+    if (tabId === null) return [];
+    const messages = (this.conversations.get(tabId) ?? []).filter(
+      (message) => message.kind !== "page-read" && message.status !== "streaming"
+    );
+    const compressed = this.compressedContexts.get(tabId);
+    if (!compressed) return [...messages];
+    return [
+      createCompressedHistoryMessage(compressed.summary),
+      ...messages.slice(compressed.coveredMessageCount)
+    ];
+  }
+
+  /** 返回当前已完成、可发送给模型的原始消息数量，作为压缩边界。 */
+  getRequestMessageCount(tabId: number | null): number {
+    if (tabId === null) return 0;
+    return (this.conversations.get(tabId) ?? []).filter(
+      (message) => message.kind !== "page-read" && message.status !== "streaming"
+    ).length;
+  }
+
+  /** 用摘要替换指定边界前的模型上下文，但不删除界面中的完整聊天记录。 */
+  compressRequestHistory(
+    tabId: number,
+    summary: string,
+    coveredMessageCount: number
+  ): ConversationMessage[] {
+    this.compressedContexts.set(tabId, { summary, coveredMessageCount });
+    return [createCompressedHistoryMessage(summary)];
   }
 
   /** 追加问题和一个空的助手消息，供流式响应持续更新。 */

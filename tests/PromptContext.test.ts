@@ -15,7 +15,7 @@ const page = {
 };
 
 describe("PromptContext", () => {
-  it("发送与预览都只采用最近 6 轮真实对话", () => {
+  it("发送与预览采用全部真实对话", () => {
     const history = Array.from({ length: 14 }, (_, index) => ({
       role: index % 2 === 0 ? "user" as const : "assistant" as const,
       content: `消息${index}`
@@ -27,9 +27,9 @@ describe("PromptContext", () => {
     } as typeof history[number] & { kind: "page-read" });
 
     const input = buildResponseInput(page, history, "新问题");
-    expect(input).toHaveLength(15);
+    expect(input).toHaveLength(17);
     expect(input.map((message) => message.content).join("\n")).not.toContain("网页读取记录");
-    expect(input.map((message) => message.content)).not.toContain("消息0");
+    expect(input.map((message) => message.content)).toContain("消息0");
     expect(input.at(-1)).toEqual({ role: "user", content: "新问题" });
   });
 
@@ -44,7 +44,7 @@ describe("PromptContext", () => {
     expect(withDraft.segments.map((segment) => segment.label)).toEqual([
       "系统提示",
       "网页上下文",
-      "对话历史（最近 6 轮）",
+      "对话历史",
       "当前输入"
     ]);
     expect(emptyDraft.segments.at(-1)?.tokens).toBe(0);

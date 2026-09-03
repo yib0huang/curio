@@ -2,7 +2,8 @@ import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "
 import type { ConversationMessage, PageSnapshot } from "../../shared/types";
 import {
   estimateDraftInputTokens,
-  estimateNextInputUsage
+  estimateNextInputUsage,
+  MODEL_CONTEXT_LIMIT
 } from "../services/PromptContext";
 
 interface ComposerProps {
@@ -15,8 +16,6 @@ interface ComposerProps {
   onOpenSettings: () => void;
   onSubmit: (question: string) => Promise<boolean>;
 }
-
-const MODEL_CONTEXT_LIMIT = 1_000_000;
 
 /** 以紧凑形式展示 1M 上下文窗口的占用比例。 */
 function formatUsagePercent(tokens: number): string {

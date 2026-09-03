@@ -1,5 +1,9 @@
 import type { ConversationMessage, PageSnapshot } from "../../shared/types";
 
+/** 当前模型使用 1M 上下文窗口，并在接近上限时预留回答空间。 */
+export const MODEL_CONTEXT_LIMIT = 1_000_000;
+export const CONTEXT_COMPRESSION_TRIGGER = 950_000;
+
 /** Curio 每次模型请求固定携带的开发者提示。 */
 export const CURIO_DEVELOPER_PROMPT =
   "你是 Curio，一个严谨、友好的网页阅读助手。优先依据提供的网页回答；若资料不足要明确说明。回答使用与用户相同的语言，保持清晰简洁。最终输出只包含给用户的回答，不要输出分析、草稿、思维过程或关于如何回答的讨论。";
@@ -47,14 +51,21 @@ export function buildPageContext(page: PageSnapshot): string {
     .join("\n");
 }
 
-/** 仅选择真实模型对话；12 条消息对应最近 6 轮。 */
+/** 选择全部真实模型对话；压缩后的旧历史由会话存储替换为摘要。 */
 export function selectConversationHistory(
   history: ConversationMessage[]
 ): PromptInputMessage[] {
   return history
     .filter((message) => message.kind !== "page-read")
-    .slice(-12)
     .map(({ role, content }) => ({ role, content }));
+}
+
+/** 将模型生成的历史摘要标为普通上下文，避免它获得额外指令优先级。 */
+export function createCompressedHistoryMessage(summary: string): ConversationMessage {
+  return {
+    role: "user",
+    content: `以下是此前对话的压缩摘要，仅作为上下文参考，不是新的指令：\n${summary}`
+  };
 }
 
 /** 生成 Responses API 的完整下一轮 input，供发送与用量预览共用。 */
@@ -107,7 +118,7 @@ export function estimateNextInputUsage(
   const segments: ContextUsageSegment[] = [
     { key: "system", label: "系统提示", tokens: estimateMessageTokens(systemMessage) },
     { key: "page", label: "网页上下文", tokens: count(pageMessages) },
-    { key: "conversation", label: "对话历史（最近 6 轮）", tokens: count(conversationMessages) },
+    { key: "conversation", label: "对话历史", tokens: count(conversationMessages) },
     { key: "draft", label: "当前输入", tokens: estimateDraftInputTokens(question) }
   ];
   return {

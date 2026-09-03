@@ -6,6 +6,10 @@ import type {
 } from "../../shared/types";
 import { ChromePageService } from "../services/ChromePageService";
 import { ConversationStore } from "../services/ConversationStore";
+import {
+  CONTEXT_COMPRESSION_TRIGGER,
+  estimateNextInputUsage
+} from "../services/PromptContext";
 import { ResponsesClient } from "../services/ResponsesClient";
 import { SettingsRepository } from "../services/SettingsRepository";
 
@@ -19,6 +23,7 @@ export function useCurioController() {
   const [tabId, setTabId] = useState<number | null>(null);
   const [page, setPage] = useState<PageSnapshot | null>(null);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
+  const [contextMessages, setContextMessages] = useState<ConversationMessage[]>([]);
   const [pageStatus, setPageStatus] = useState("正在读取当前网页…");
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
@@ -36,6 +41,7 @@ export function useCurioController() {
     setPageStatus(result.status);
     setError(result.error ?? "");
     setMessages(conversationStore.get(result.tabId));
+    setContextMessages(conversationStore.getRequestHistory(result.tabId));
   }, [conversationStore, pageService]);
 
   const openSettings = useCallback(async () => {
@@ -73,8 +79,9 @@ export function useCurioController() {
       setError("");
       setSending(true);
       const requestTabId = tabId;
-      const history = conversationStore.get(requestTabId);
-      const isFirstQuestion = history.length === 0;
+      let history = conversationStore.getRequestHistory(requestTabId);
+      const requestMessageCount = conversationStore.getRequestMessageCount(requestTabId);
+      const isFirstQuestion = requestMessageCount === 0;
       let requestPage = page;
       setMessages(
         isFirstQuestion
@@ -101,6 +108,32 @@ export function useCurioController() {
           if (activeTabIdRef.current === requestTabId) setMessages(thinkingMessages);
         }
 
+        const nextInputTokens = estimateNextInputUsage(
+          requestPage,
+          history,
+          question
+        ).totalTokens;
+        if (history.length > 0 && nextInputTokens >= CONTEXT_COMPRESSION_TRIGGER) {
+          const compressingMessages = conversationStore.setStreamingActivity(
+            requestTabId,
+            "正在压缩上下文…"
+          );
+          if (activeTabIdRef.current === requestTabId) setMessages(compressingMessages);
+          const summary = await responsesClient.compressHistory(currentSettings, history);
+          history = conversationStore.compressRequestHistory(
+            requestTabId,
+            summary,
+            requestMessageCount
+          );
+          const thinkingMessages = conversationStore.setStreamingActivity(
+            requestTabId,
+            "正在思考…"
+          );
+          if (activeTabIdRef.current === requestTabId) {
+            setMessages(thinkingMessages);
+          }
+        }
+
         const answer = await responsesClient.answer(
           currentSettings,
           requestPage,
@@ -121,11 +154,17 @@ export function useCurioController() {
           answer.reasoning
         );
         const nextMessages = conversationStore.completeTurn(requestTabId);
-        if (activeTabIdRef.current === requestTabId) setMessages(nextMessages);
+        if (activeTabIdRef.current === requestTabId) {
+          setMessages(nextMessages);
+          setContextMessages(conversationStore.getRequestHistory(requestTabId));
+        }
         return true;
       } catch (requestError) {
         const nextMessages = conversationStore.rollbackTurn(requestTabId);
-        if (activeTabIdRef.current === requestTabId) setMessages(nextMessages);
+        if (activeTabIdRef.current === requestTabId) {
+          setMessages(nextMessages);
+          setContextMessages(conversationStore.getRequestHistory(requestTabId));
+        }
         if (activeTabIdRef.current === requestTabId) {
           setError(
             requestError instanceof Error ? requestError.message : String(requestError)
@@ -164,6 +203,7 @@ export function useCurioController() {
   return {
     page,
     messages,
+    contextMessages,
     pageStatus,
     error,
     sending,

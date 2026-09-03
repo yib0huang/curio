@@ -70,7 +70,7 @@ describe("Composer", () => {
     expect(screen.queryByText(/按当前草稿估算/)).toBeNull();
     expect(screen.getByText("系统提示")).toBeTruthy();
     expect(screen.getByText("网页上下文")).toBeTruthy();
-    expect(screen.getByText("对话历史（最近 6 轮）")).toBeTruthy();
+    expect(screen.getByText("对话历史")).toBeTruthy();
     expect(screen.getByText("当前输入")).toBeTruthy();
     expect(screen.queryByText(/输出|推理/)).toBeNull();
 
